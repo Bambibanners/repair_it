@@ -5,18 +5,16 @@ DIR="$( cd "$( dirname "${BASH_SOURCE[0]}" )" >/dev/null 2>&1 && pwd )"
 cd "$DIR"
 
 echo "Starting Repair-It Backend API on http://0.0.0.0:8000..."
-if [ -d "backend/venv" ]; [ -f "backend/venv/bin/uvicorn" ]; then
-    backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+if [ -d "backend/venv" ] && [ -f "backend/venv/bin/uvicorn" ]; then
+    (cd backend && ../backend/venv/bin/uvicorn app.main:app --host 0.0.0.0 --port 8000) &
 else
-    python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000 &
+    (cd backend && python3 -m uvicorn app.main:app --host 0.0.0.0 --port 8000) &
 fi
 BACKEND_PID=$!
 
 echo "Starting Repair-It Web Application on http://0.0.0.0:10930..."
-cd frontend
-npm run dev -- --host 0.0.0.0 &
+(cd frontend && npm run dev -- --host 0.0.0.0) &
 FRONTEND_PID=$!
-cd ..
 
 cleanup() {
     echo "Stopping Repair-It services..."
