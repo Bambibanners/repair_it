@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, PlusCircle, Wrench, HardDrive } from 'lucide-react';
+import { X, PlusCircle } from 'lucide-react';
 
 export default function QuickIntakeModal({ onClose, onSubmit }) {
   const [brand, setBrand] = useState('');
@@ -31,73 +31,73 @@ export default function QuickIntakeModal({ onClose, onSubmit }) {
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-xl shadow-2xl overflow-hidden flex flex-col">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-xl modal-shadow overflow-hidden flex flex-col max-h-[90vh]">
         
         {/* Modal Header */}
-        <div className="p-5 border-b border-slate-800 bg-slate-950 flex items-center justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex items-center justify-between">
           <div className="flex items-center space-x-2.5">
-            <div className="p-2 rounded-lg bg-amber-500/20 text-amber-400 border border-amber-500/30">
+            <div className="p-2 rounded-xl bg-amber-100 text-amber-800 border border-amber-300">
               <PlusCircle className="w-5 h-5 stroke-[2.5]" />
             </div>
             <div>
-              <h2 className="text-lg font-bold text-white font-mono">INTAKE NEW HARDWARE</h2>
-              <p className="text-xs text-slate-400">Log newly acquired vintage equipment for workbench triage.</p>
+              <h2 className="text-base sm:text-lg font-bold text-slate-900 font-mono">INTAKE NEW HARDWARE</h2>
+              <p className="text-xs text-slate-500">Log newly acquired vintage equipment for workbench triage.</p>
             </div>
           </div>
           <button 
             onClick={onClose}
-            className="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors"
           >
             <X className="w-4 h-4" />
           </button>
         </div>
 
         {/* Modal Form Body */}
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-4 overflow-y-auto">
           
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Brand / Manufacturer *</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Brand / Manufacturer *</label>
               <input
                 type="text"
                 required
                 placeholder="e.g. Pioneer, NAD, Aiwa"
                 value={brand}
                 onChange={(e) => setBrand(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Model Number *</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Model Number *</label>
               <input
                 type="text"
                 required
                 placeholder="e.g. PD-6030, CT-F500"
                 value={modelNumber}
                 onChange={(e) => setModelNumber(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white placeholder-slate-500 focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Serial Number *</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Serial Number *</label>
               <input
                 type="text"
                 required
                 value={serialNumber}
                 onChange={(e) => setSerialNumber(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs font-mono text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Hardware Category</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Hardware Category</label>
               <select
                 value={category}
                 onChange={(e) => setCategory(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
               >
                 <option value="CD Player">CD Player / Transport</option>
                 <option value="Turntable">Turntable</option>
@@ -109,36 +109,36 @@ export default function QuickIntakeModal({ onClose, onSubmit }) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Purchase Base Cost (£)</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Purchase Base Cost (£)</label>
               <input
                 type="number"
                 step="0.01"
                 placeholder="0.00"
                 value={baseCost}
                 onChange={(e) => setBaseCost(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs font-mono text-amber-400 focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-amber-700 focus:outline-none focus:border-amber-500 focus:bg-white"
               />
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Acquisition Source</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Acquisition Source</label>
               <input
                 type="text"
                 placeholder="e.g. Car Boot, eBay, Estate Sale"
                 value={acquisitionSource}
                 onChange={(e) => setAcquisitionSource(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
               />
             </div>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3.5">
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Cosmetic State</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Cosmetic State</label>
               <select
                 value={cosmeticCondition}
                 onChange={(e) => setCosmeticCondition(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
               >
                 <option value="Mint">Mint (Like New)</option>
                 <option value="Good">Good (Minor Marks)</option>
@@ -149,11 +149,11 @@ export default function QuickIntakeModal({ onClose, onSubmit }) {
             </div>
 
             <div>
-              <label className="block text-xs font-medium text-slate-400 mb-1">Repair Priority</label>
+              <label className="block text-xs font-bold text-slate-700 mb-1">Repair Priority</label>
               <select
                 value={priority}
                 onChange={(e) => setPriority(e.target.value)}
-                className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+                className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
               >
                 <option value={1}>1 - High Priority</option>
                 <option value={2}>2 - Medium Priority</option>
@@ -163,28 +163,28 @@ export default function QuickIntakeModal({ onClose, onSubmit }) {
           </div>
 
           <div>
-            <label className="block text-xs font-medium text-slate-400 mb-1">Initial Fault Symptoms</label>
+            <label className="block text-xs font-bold text-slate-700 mb-1">Initial Fault Symptoms</label>
             <textarea
               rows={2}
               placeholder="e.g. No power, drawer jammed, left channel dead..."
               value={initialSymptoms}
               onChange={(e) => setInitialSymptoms(e.target.value)}
-              className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-xs text-white focus:outline-none focus:border-amber-500"
+              className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
             />
           </div>
 
           {/* Form Actions */}
-          <div className="pt-4 border-t border-slate-800 flex items-center justify-end space-x-3">
+          <div className="pt-3 border-t border-slate-200 flex items-center justify-end space-x-2.5">
             <button
               type="button"
               onClick={onClose}
-              className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-300 text-xs font-medium transition-colors"
+              className="px-4 py-2 rounded-xl bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold transition-colors"
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs shadow-md shadow-amber-500/20 transition-colors"
+              className="flex items-center space-x-1.5 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-sm transition-colors"
             >
               <PlusCircle className="w-4 h-4 stroke-[2.5]" />
               <span>Log Intake Record</span>

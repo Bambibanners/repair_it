@@ -7,10 +7,7 @@ import {
   HardDrive, 
   Plus, 
   Save, 
-  ExternalLink,
-  Trash2,
-  CheckCircle2,
-  DollarSign
+  Trash2
 } from 'lucide-react';
 
 export default function UnitDetailModal({ 
@@ -82,7 +79,6 @@ export default function UnitDetailModal({
   const partsTotal = parts.reduce((acc, p) => acc + (p.cost || 0), 0);
   const totalCostBasis = (parseFloat(baseCost) || 0) + partsTotal;
 
-  const fin = unit.financial_summary || {};
   const currentSalePrice = parseFloat(finalSalePrice) || 0;
   const currentFees = parseFloat(platformFees) || 0;
   const currentShipping = parseFloat(shippingCosts) || 0;
@@ -140,33 +136,33 @@ export default function UnitDetailModal({
   };
 
   return (
-    <div className="fixed inset-0 z-50 bg-black/80 backdrop-blur-sm flex items-center justify-center p-4 overflow-y-auto">
-      <div className="bg-slate-900 border border-slate-800 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col shadow-2xl overflow-hidden">
+    <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col modal-shadow overflow-hidden">
         
         {/* Modal Top Header */}
-        <div className="p-6 border-b border-slate-800 bg-slate-950 flex items-start justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex items-start justify-between">
           <div>
-            <div className="flex items-center space-x-3">
-              <h2 className="text-2xl font-bold text-white font-mono">{unit.brand} {unit.model_number}</h2>
-              <span className="px-2.5 py-1 rounded-full text-xs font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/30">
+            <div className="flex flex-wrap items-center gap-2">
+              <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-mono">{unit.brand} {unit.model_number}</h2>
+              <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                 {unit.category}
               </span>
             </div>
-            <p className="text-xs text-slate-400 font-mono mt-1">
-              Serial #: <span className="text-slate-200">{unit.serial_number}</span> • Acquisition: <span className="text-slate-200">{unit.acquisition_source || 'N/A'}</span>
+            <p className="text-xs text-slate-500 font-mono mt-1">
+              Serial #: <span className="text-slate-800 font-medium">{unit.serial_number}</span> • Acquisition: <span className="text-slate-800 font-medium">{unit.acquisition_source || 'N/A'}</span>
             </p>
           </div>
           
           <button 
             onClick={onClose}
-            className="p-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-400 hover:text-white transition-colors"
+            className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors shrink-0"
           >
             <X className="w-5 h-5" />
           </button>
         </div>
 
-        {/* Tabs Bar */}
-        <div className="flex border-b border-slate-800 bg-slate-950/60 px-6 gap-2 pt-2">
+        {/* Tabs Bar - Scrollable on narrow viewports */}
+        <div className="flex border-b border-slate-200 bg-slate-50/50 px-4 sm:px-6 gap-1 pt-2 overflow-x-auto">
           {[
             { id: 'hardware', label: 'Hardware Details', icon: HardDrive },
             { id: 'repair', label: 'Repair Log & Workbench', icon: Wrench },
@@ -179,13 +175,13 @@ export default function UnitDetailModal({
               <button
                 key={tab.id}
                 onClick={() => setActiveTab(tab.id)}
-                className={`flex items-center space-x-2 px-4 py-2.5 text-xs font-semibold border-b-2 transition-all ${
+                className={`flex items-center space-x-2 px-3.5 py-2.5 text-xs font-bold border-b-2 whitespace-nowrap transition-all ${
                   isActive 
-                    ? 'border-amber-400 text-amber-400 bg-amber-500/10 rounded-t-lg' 
-                    : 'border-transparent text-slate-400 hover:text-slate-200 hover:bg-slate-800/40'
+                    ? 'border-amber-500 text-amber-800 bg-white rounded-t-lg shadow-xs' 
+                    : 'border-transparent text-slate-600 hover:text-slate-900 hover:bg-slate-100'
                 }`}
               >
-                <Icon className="w-4 h-4" />
+                <Icon className="w-3.5 h-3.5" />
                 <span>{tab.label}</span>
               </button>
             );
@@ -193,19 +189,19 @@ export default function UnitDetailModal({
         </div>
 
         {/* Tab Contents */}
-        <div className="p-6 flex-1 overflow-y-auto">
+        <div className="p-4 sm:p-6 flex-1 overflow-y-auto">
           
           {/* TAB 1: Hardware Details */}
           {activeTab === 'hardware' && (
-            <div className="space-y-6">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-5">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">System Workflow Status</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">System Workflow Status</label>
                   <select
                     value={status}
                     onChange={(e) => setStatus(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                   >
                     <option value="Triage">Triage (Just Arrived)</option>
                     <option value="On Bench">On Bench</option>
@@ -217,11 +213,11 @@ export default function UnitDetailModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Cosmetic Condition</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Cosmetic Condition</label>
                   <select
                     value={cosmeticCondition}
                     onChange={(e) => setCosmeticCondition(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                   >
                     <option value="Mint">Mint (Collector Grade)</option>
                     <option value="Good">Good (Minor Wear)</option>
@@ -232,32 +228,32 @@ export default function UnitDetailModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Base Purchase Cost (£)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Base Purchase Cost (£)</label>
                   <input
                     type="number"
                     step="0.01"
                     value={baseCost}
                     onChange={(e) => setBaseCost(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm font-mono text-amber-400 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-amber-700 focus:outline-none focus:border-amber-500 focus:bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Acquisition Source</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Acquisition Source</label>
                   <input
                     type="text"
                     disabled
                     value={unit.acquisition_source || 'Unspecified'}
-                    className="w-full bg-slate-950/50 border border-slate-800/80 rounded-xl p-2.5 text-sm text-slate-400 cursor-not-allowed"
+                    className="w-full bg-slate-100 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-500 cursor-not-allowed"
                   />
                 </div>
 
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex justify-end">
+              <div className="pt-4 border-t border-slate-200 flex justify-end">
                 <button
                   onClick={handleSaveHardware}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs shadow-md transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-sm transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   <span>Update Hardware Details</span>
@@ -268,15 +264,15 @@ export default function UnitDetailModal({
 
           {/* TAB 2: Repair Log & Workbench */}
           {activeTab === 'repair' && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               <div className="grid grid-cols-1 gap-4">
                 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Workbench Priority</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Workbench Priority</label>
                   <select
                     value={priority}
                     onChange={(e) => setPriority(e.target.value)}
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                   >
                     <option value={1}>1 - High Priority (Immediate Repair)</option>
                     <option value={2}>2 - Medium Priority (Standard Workload)</option>
@@ -285,44 +281,44 @@ export default function UnitDetailModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Initial Symptoms & Fault Diagnostic</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Initial Symptoms & Fault Diagnostic</label>
                   <textarea
                     rows={3}
                     value={symptoms}
                     onChange={(e) => setSymptoms(e.target.value)}
                     placeholder="Describe symptoms (e.g. motor spins but laser dead, channel B crackle)..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Required Action Plan</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Required Action Plan</label>
                   <textarea
                     rows={2}
                     value={actionPlan}
                     onChange={(e) => setActionPlan(e.target.value)}
                     placeholder="Steps planned (e.g. replace capstan belt, flush pots with DeoxIT)..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                   />
                 </div>
 
                 <div>
-                  <label className="block text-xs font-medium text-slate-400 mb-1">Bench Notes (Running Work Log)</label>
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Bench Notes (Running Work Log)</label>
                   <textarea
                     rows={4}
                     value={benchNotes}
                     onChange={(e) => setBenchNotes(e.target.value)}
                     placeholder="Running log of measurements, solder work, test results..."
-                    className="w-full bg-slate-950 border border-slate-800 rounded-xl p-3 text-xs font-mono text-emerald-300 focus:outline-none focus:border-amber-500"
+                    className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
                   />
                 </div>
 
               </div>
 
-              <div className="pt-4 border-t border-slate-800 flex justify-end">
+              <div className="pt-4 border-t border-slate-200 flex justify-end">
                 <button
                   onClick={handleSaveRepairLog}
-                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs shadow-md transition-colors"
+                  className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-sm transition-colors"
                 >
                   <Save className="w-4 h-4" />
                   <span>Save Workbench Notes</span>
@@ -333,38 +329,38 @@ export default function UnitDetailModal({
 
           {/* TAB 3: Parts Consumed */}
           {activeTab === 'parts' && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               
               {/* Existing Parts Table */}
-              <div className="bg-slate-950 border border-slate-800 rounded-xl overflow-hidden">
-                <table className="w-full text-left text-xs">
-                  <thead className="bg-slate-900 border-b border-slate-800 uppercase text-slate-400 font-mono text-[10px]">
+              <div className="bg-white border border-slate-200 rounded-xl overflow-x-auto shadow-xs">
+                <table className="w-full text-left text-xs min-w-[500px]">
+                  <thead className="bg-slate-50 border-b border-slate-200 uppercase text-slate-600 font-mono text-[10px]">
                     <tr>
-                      <th className="py-2.5 px-3">Description</th>
-                      <th className="py-2.5 px-3">Supplier</th>
-                      <th className="py-2.5 px-3">Cost (£)</th>
-                      <th className="py-2.5 px-3">Status</th>
-                      <th className="py-2.5 px-3 text-center">Action</th>
+                      <th className="py-2.5 px-3 font-bold">Description</th>
+                      <th className="py-2.5 px-3 font-bold">Supplier</th>
+                      <th className="py-2.5 px-3 font-bold">Cost (£)</th>
+                      <th className="py-2.5 px-3 font-bold">Status</th>
+                      <th className="py-2.5 px-3 text-center font-bold">Action</th>
                     </tr>
                   </thead>
-                  <tbody className="divide-y divide-slate-800">
+                  <tbody className="divide-y divide-slate-100">
                     {parts.length === 0 ? (
                       <tr>
-                        <td colSpan={5} className="py-6 text-center text-slate-500">
+                        <td colSpan={5} className="py-6 text-center text-slate-400">
                           No spare parts logged for this unit.
                         </td>
                       </tr>
                     ) : (
                       parts.map((p) => (
-                        <tr key={p.part_id} className="hover:bg-slate-900/50">
-                          <td className="py-2.5 px-3 font-medium text-white">{p.description}</td>
-                          <td className="py-2.5 px-3 text-slate-400">{p.supplier || '-'}</td>
-                          <td className="py-2.5 px-3 font-mono text-amber-400">£{(p.cost || 0).toFixed(2)}</td>
+                        <tr key={p.part_id} className="hover:bg-slate-50">
+                          <td className="py-2.5 px-3 font-bold text-slate-900">{p.description}</td>
+                          <td className="py-2.5 px-3 text-slate-600">{p.supplier || '-'}</td>
+                          <td className="py-2.5 px-3 font-mono font-bold text-amber-700">£{(p.cost || 0).toFixed(2)}</td>
                           <td className="py-2.5 px-3">
                             <select
                               value={p.order_status}
                               onChange={(e) => onUpdatePartStatus(p.part_id, { order_status: e.target.value })}
-                              className="bg-slate-900 border border-slate-800 rounded px-2 py-1 text-[11px] text-slate-200"
+                              className="bg-slate-50 border border-slate-300 rounded px-2 py-1 text-[11px] text-slate-800"
                             >
                               <option value="To Order">To Order</option>
                               <option value="Ordered">Ordered</option>
@@ -376,7 +372,7 @@ export default function UnitDetailModal({
                           <td className="py-2.5 px-3 text-center">
                             <button
                               onClick={() => onDeletePart(p.part_id)}
-                              className="p-1 text-slate-500 hover:text-rose-400 transition-colors"
+                              className="p-1 text-slate-400 hover:text-rose-600 transition-colors"
                             >
                               <Trash2 className="w-3.5 h-3.5" />
                             </button>
@@ -389,22 +385,22 @@ export default function UnitDetailModal({
               </div>
 
               {/* Add New Part Form */}
-              <form onSubmit={handleCreatePart} className="p-4 rounded-xl bg-slate-950/60 border border-slate-800 space-y-3">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wide">Log New Part Order</h4>
-                <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
+              <form onSubmit={handleCreatePart} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Log New Part Order</h4>
+                <div className="grid grid-cols-1 sm:grid-cols-4 gap-2.5">
                   <input
                     type="text"
                     placeholder="Part description (e.g. Capstan belt)"
                     value={newPartDesc}
                     onChange={(e) => setNewPartDesc(e.target.value)}
-                    className="sm:col-span-2 bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="sm:col-span-2 bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
                   />
                   <input
                     type="text"
                     placeholder="Supplier (Farnell, Mouser...)"
                     value={newPartSupplier}
                     onChange={(e) => setNewPartSupplier(e.target.value)}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs text-white focus:outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
                   />
                   <input
                     type="number"
@@ -412,13 +408,13 @@ export default function UnitDetailModal({
                     placeholder="Cost £"
                     value={newPartCost}
                     onChange={(e) => setNewPartCost(e.target.value)}
-                    className="bg-slate-900 border border-slate-800 rounded-lg p-2 text-xs font-mono text-amber-400 focus:outline-none focus:border-amber-500"
+                    className="bg-white border border-slate-300 rounded-lg p-2 text-xs font-mono font-bold text-amber-700 focus:outline-none focus:border-amber-500"
                   />
                 </div>
                 <div className="flex justify-end">
                   <button
                     type="submit"
-                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs transition-colors"
+                    className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs transition-colors"
                   >
                     <Plus className="w-3.5 h-3.5 stroke-[3]" />
                     <span>Add Part Order</span>
@@ -431,52 +427,52 @@ export default function UnitDetailModal({
 
           {/* TAB 4: Financials & Exit Strategy */}
           {activeTab === 'financials' && (
-            <div className="space-y-6">
+            <div className="space-y-5">
               
               {/* Financial Roll-up Card */}
-              <div className="p-5 rounded-2xl bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 border border-amber-500/30 space-y-4">
-                <h3 className="text-sm font-bold text-amber-400 font-mono uppercase tracking-wider">True Net Profit Calculator</h3>
+              <div className="p-4 sm:p-5 rounded-2xl bg-slate-50 border border-amber-300 space-y-4 shadow-sm">
+                <h3 className="text-xs font-bold text-amber-800 font-mono uppercase tracking-wider">True Net Profit Calculator</h3>
                 
-                <div className="grid grid-cols-2 sm:grid-cols-4 gap-4 text-xs font-mono">
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-slate-400 block text-[10px]">BASE PURCHASE</span>
-                    <span className="text-lg font-bold text-white">£{parseFloat(baseCost || 0).toFixed(2)}</span>
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs font-mono">
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                    <span className="text-slate-500 block text-[10px] font-bold">BASE PURCHASE</span>
+                    <span className="text-base font-bold text-slate-900">£{parseFloat(baseCost || 0).toFixed(2)}</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-950 border border-slate-800">
-                    <span className="text-slate-400 block text-[10px]">PARTS CONSUMED</span>
-                    <span className="text-lg font-bold text-amber-400">£{partsTotal.toFixed(2)}</span>
+                  <div className="p-3 rounded-xl bg-white border border-slate-200 shadow-2xs">
+                    <span className="text-slate-500 block text-[10px] font-bold">PARTS CONSUMED</span>
+                    <span className="text-base font-bold text-amber-700">£{partsTotal.toFixed(2)}</span>
                   </div>
 
-                  <div className="p-3 rounded-xl bg-slate-950 border border-amber-500/40">
-                    <span className="text-amber-400 block text-[10px]">TOTAL COST BASIS</span>
-                    <span className="text-lg font-bold text-amber-300">£{totalCostBasis.toFixed(2)}</span>
+                  <div className="p-3 rounded-xl bg-amber-50 border border-amber-300 shadow-2xs">
+                    <span className="text-amber-800 block text-[10px] font-bold">TOTAL COST BASIS</span>
+                    <span className="text-base font-bold text-amber-900">£{totalCostBasis.toFixed(2)}</span>
                   </div>
 
-                  <div className={`p-3 rounded-xl border ${computedNetProfit >= 0 ? 'bg-emerald-500/10 border-emerald-500/30' : 'bg-rose-500/10 border-rose-500/30'}`}>
-                    <span className="text-slate-400 block text-[10px]">COMPUTED NET PROFIT</span>
-                    <span className={`text-lg font-bold ${computedNetProfit >= 0 ? 'text-emerald-400' : 'text-rose-400'}`}>
+                  <div className={`p-3 rounded-xl border shadow-2xs ${computedNetProfit >= 0 ? 'bg-emerald-50 border-emerald-300' : 'bg-rose-50 border-rose-300'}`}>
+                    <span className="text-slate-600 block text-[10px] font-bold">COMPUTED NET PROFIT</span>
+                    <span className={`text-base font-bold ${computedNetProfit >= 0 ? 'text-emerald-700' : 'text-rose-700'}`}>
                       £{computedNetProfit.toFixed(2)}
                     </span>
                   </div>
                 </div>
 
-                <div className="text-[11px] text-slate-400 bg-slate-950/60 p-2.5 rounded-lg border border-slate-800/80 font-mono">
+                <div className="text-[11px] text-slate-600 bg-white p-2.5 rounded-lg border border-slate-200 font-mono">
                   Formula: Net Profit = Final Sale Price (£{currentSalePrice.toFixed(2)}) - (Cost Basis £{totalCostBasis.toFixed(2)} + Platform Fees £{currentFees.toFixed(2)} + Shipping £{currentShipping.toFixed(2)})
                 </div>
               </div>
 
               {/* Sales Listing Form */}
               <div className="space-y-4">
-                <h4 className="text-xs font-bold text-slate-300 uppercase tracking-wide">Multi-Channel Exit Listing Details</h4>
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Multi-Channel Exit Listing Details</h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Sales Platform</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Sales Platform</label>
                     <select
                       value={salesPlatform}
                       onChange={(e) => setSalesPlatform(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                     >
                       <option value="eBay">eBay UK</option>
                       <option value="Reverb">Reverb</option>
@@ -487,69 +483,69 @@ export default function UnitDetailModal({
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Target Asking Price (£)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Target Asking Price (£)</label>
                     <input
                       type="number"
                       step="0.01"
                       placeholder="Desired price"
                       value={targetPrice}
                       onChange={(e) => setTargetPrice(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm font-mono text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Final Sale Price (£)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Final Sale Price (£)</label>
                     <input
                       type="number"
                       step="0.01"
                       placeholder="Actual sold price"
                       value={finalSalePrice}
                       onChange={(e) => setFinalSalePrice(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm font-mono text-emerald-400 focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono font-bold text-emerald-700 focus:outline-none focus:border-amber-500 focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Platform Fees (£)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Platform Fees (£)</label>
                     <input
                       type="number"
                       step="0.01"
                       placeholder="e.g. eBay 12.9%"
                       value={platformFees}
                       onChange={(e) => setPlatformFees(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm font-mono text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Outbound Shipping Paid (£)</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Outbound Shipping Paid (£)</label>
                     <input
                       type="number"
                       step="0.01"
                       placeholder="Postage cost"
                       value={shippingCosts}
                       onChange={(e) => setShippingCosts(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm font-mono text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs font-mono text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                     />
                   </div>
 
                   <div>
-                    <label className="block text-xs font-medium text-slate-400 mb-1">Listing URL / Link</label>
+                    <label className="block text-xs font-bold text-slate-700 mb-1">Listing URL / Link</label>
                     <input
                       type="text"
                       placeholder="https://www.ebay.co.uk/itm/..."
                       value={listingUrl}
                       onChange={(e) => setListingUrl(e.target.value)}
-                      className="w-full bg-slate-950 border border-slate-800 rounded-xl p-2.5 text-sm text-white focus:outline-none focus:border-amber-500"
+                      className="w-full bg-slate-50 border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-amber-500 focus:bg-white"
                     />
                   </div>
                 </div>
 
-                <div className="pt-4 border-t border-slate-800 flex justify-end">
+                <div className="pt-4 border-t border-slate-200 flex justify-end">
                   <button
                     onClick={handleSaveSales}
-                    className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-slate-950 font-semibold text-xs shadow-md transition-colors"
+                    className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-sm transition-colors"
                   >
                     <Save className="w-4 h-4" />
                     <span>Save Sales & Exit Record</span>
