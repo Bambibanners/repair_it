@@ -2,6 +2,40 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
 
+# Master Parts Catalog Schemas
+class PartCompatibilityBase(BaseModel):
+    brand: str
+    model_number: str
+    notes: Optional[str] = None
+
+class PartCompatibilityCreate(PartCompatibilityBase):
+    pass
+
+class PartCompatibilitySchema(PartCompatibilityBase):
+    compatibility_id: str
+    master_part_id: str
+
+    model_config = ConfigDict(from_attributes=True)
+
+class MasterPartBase(BaseModel):
+    part_number: str
+    name: str
+    category: str = "General"
+    supplier: Optional[str] = None
+    unit_cost: float = 0.0
+    stock_qty: int = 0
+    notes: Optional[str] = None
+
+class MasterPartCreate(MasterPartBase):
+    compatibilities: List[PartCompatibilityCreate] = []
+
+class MasterPartSchema(MasterPartBase):
+    master_part_id: str
+    created_at: datetime
+    compatibilities: List[PartCompatibilitySchema] = []
+
+    model_config = ConfigDict(from_attributes=True)
+
 # Media & Manual Schemas
 class UnitMediaSchema(BaseModel):
     media_id: str

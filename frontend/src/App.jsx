@@ -4,6 +4,7 @@ import Dashboard from './components/Dashboard';
 import InventoryGrid from './components/InventoryGrid';
 import WorkbenchKanban from './components/WorkbenchKanban';
 import SalesView from './components/SalesView';
+import MasterPartsCatalog from './components/MasterPartsCatalog';
 import UnitDetailModal from './components/UnitDetailModal';
 import QuickIntakeModal from './components/QuickIntakeModal';
 import GoogleDriveAuthModal from './components/GoogleDriveAuthModal';
@@ -210,6 +211,10 @@ export default function App() {
                 onUpdateStatus={handleUpdateStatus}
                 onOpenIntake={() => setIsIntakeOpen(true)}
               />
+            )}
+
+            {activeTab === 'master_parts' && (
+              <MasterPartsCatalog />
             )}
 
             {activeTab === 'sales' && (

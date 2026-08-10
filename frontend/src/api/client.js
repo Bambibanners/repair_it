@@ -126,3 +126,22 @@ export const googleLogout = async () => {
   const res = await api.post('/auth/google/logout');
   return res.data;
 };
+
+export const getMasterParts = async (params = {}) => {
+  const res = await api.get('/master-parts/', { params });
+  return res.data;
+};
+
+export const createMasterPart = async (data) => {
+  const res = await api.post('/master-parts/', data);
+  return res.data;
+};
+
+export const addPartCompatibility = async (partId, data) => {
+  const res = await api.post(`/master-parts/${partId}/compatibility`, data);
+  return res.data;
+};
+
+export const deletePartCompatibility = async (compatibilityId) => {
+  await api.delete(`/master-parts/compatibility/${compatibilityId}`);
+};

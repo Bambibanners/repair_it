@@ -7,7 +7,8 @@ import {
   TrendingUp, 
   PlusCircle,
   Search,
-  HardDrive
+  HardDrive,
+  Cpu
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAuth, search, setSearch }) {
@@ -15,6 +16,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAu
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory Grid', icon: Table },
     { id: 'kanban', label: 'Workbench Kanban', icon: Kanban },
+    { id: 'master_parts', label: 'Parts & Compatibility', icon: Cpu },
     { id: 'sales', label: 'Sales & Financials', icon: TrendingUp },
   ];
 

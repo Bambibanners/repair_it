@@ -1,6 +1,6 @@
 from datetime import date
 from .database import SessionLocal, engine, Base
-from .models import InventoryUnit, RepairLog, PartOrder, SalesListing
+from .models import InventoryUnit, RepairLog, PartOrder, SalesListing, MasterPart, PartCompatibility
 
 def seed_database():
     Base.metadata.create_all(bind=engine)
@@ -11,7 +11,52 @@ def seed_database():
         db.close()
         return
 
-    print("Seeding database with realistic vintage audio equipment...")
+    print("Seeding database with realistic vintage audio equipment & master parts catalog...")
+
+    # Seed Master Parts Catalog
+    m1 = MasterPart(
+        part_number="KSS-210A",
+        name="Sony Optical Laser Pickup Head",
+        category="Laser Pickup",
+        supplier="WebSpareParts / eBay",
+        unit_cost=18.50,
+        stock_qty=3,
+        notes="Standard replacement optical head for 1990s Pioneer, Sony, and Denon CD transports."
+    )
+    db.add(m1)
+    db.flush()
+
+    c1_1 = PartCompatibility(master_part_id=m1.master_part_id, brand="Pioneer", model_number="PD-6030", notes="Direct drop-in replacement for KSS-150A/KSS-210A")
+    c1_2 = PartCompatibility(master_part_id=m1.master_part_id, brand="Sony", model_number="CDP-227ESD", notes="Factory original pickup")
+    c1_3 = PartCompatibility(master_part_id=m1.master_part_id, brand="Denon", model_number="DCD-610", notes="Verify ribbon cable pin count")
+    db.add_all([c1_1, c1_2, c1_3])
+
+    m2 = MasterPart(
+        part_number="BELT-SQ-1.2",
+        name="1.2mm Square Rubber Drive Belt Kit",
+        category="Belt",
+        supplier="Mouser Electronics",
+        unit_cost=4.50,
+        stock_qty=12,
+        notes="High quality rubber square belt for cassette transport flywheels."
+    )
+    db.add(m2)
+    db.flush()
+
+    c2_1 = PartCompatibility(master_part_id=m2.master_part_id, brand="Aiwa", model_number="AD-6400", notes="Capstan motor belt")
+    c2_2 = PartCompatibility(master_part_id=m2.master_part_id, brand="Akai", model_number="GX-F31", notes="Take-up reel belt")
+    db.add_all([c2_1, c2_2])
+
+    m3 = MasterPart(
+        part_number="STK4192II",
+        name="Sanyo Stereo Power Amplifier Thick Film IC Module",
+        category="IC Module",
+        supplier="CPC / Farnell",
+        unit_cost=14.00,
+        stock_qty=2,
+        notes="50W+50W dual audio power amp module. Ensure original thermal paste cleaned."
+    )
+    db.add(m3)
 
     # Unit 1: Pioneer PD-6030 (CD Transport) - On Bench
     u1 = InventoryUnit(

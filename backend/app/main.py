@@ -6,7 +6,7 @@ import os
 from .database import engine, Base
 from .seed import seed_database
 from .gdrive import LOCAL_UPLOADS_DIR
-from .routers import inventory, repair, parts, sales, dashboard, media, auth
+from .routers import inventory, repair, parts, sales, dashboard, media, auth, master_parts
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
@@ -41,6 +41,7 @@ app.include_router(sales.router)
 app.include_router(dashboard.router)
 app.include_router(media.router)
 app.include_router(auth.router)
+app.include_router(master_parts.router)
 
 @app.get("/api/v1/health")
 def health_check():

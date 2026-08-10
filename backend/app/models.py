@@ -92,3 +92,29 @@ class ServiceManual(Base):
     gdrive_file_id = Column(String(100), nullable=True)
     web_view_link = Column(String(500), nullable=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+class MasterPart(Base):
+    __tablename__ = "master_parts"
+
+    master_part_id = Column(String(36), primary_key=True, default=generate_uuid)
+    part_number = Column(String(100), nullable=False, index=True)
+    name = Column(String(255), nullable=False)
+    category = Column(String(50), nullable=False, default="General") # Laser Pickup, Belt, Capacitor, IC, Transistor, Mechanical
+    supplier = Column(String(100), nullable=True)
+    unit_cost = Column(Float, default=0.0)
+    stock_qty = Column(Integer, default=0)
+    notes = Column(Text, nullable=True)
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    compatibilities = relationship("PartCompatibility", back_populates="master_part", cascade="all, delete-orphan")
+
+class PartCompatibility(Base):
+    __tablename__ = "part_compatibilities"
+
+    compatibility_id = Column(String(36), primary_key=True, default=generate_uuid)
+    master_part_id = Column(String(36), ForeignKey("master_parts.master_part_id"), nullable=False)
+    brand = Column(String(100), nullable=False, index=True)
+    model_number = Column(String(100), nullable=False, index=True)
+    notes = Column(String(255), nullable=True)
+
+    master_part = relationship("MasterPart", back_populates="compatibilities")
