@@ -10,6 +10,7 @@ import UnitDetailModal from './components/UnitDetailModal';
 import QuickIntakeModal from './components/QuickIntakeModal';
 import GoogleDriveAuthModal from './components/GoogleDriveAuthModal';
 import BackupModal from './components/BackupModal';
+import MarketResearchModal from './components/MarketResearchModal';
 import { 
   getDashboardStats, 
   getInventory, 
@@ -39,6 +40,8 @@ export default function App() {
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
   const [isBackupOpen, setIsBackupOpen] = useState(false);
+  const [isMarketOpen, setIsMarketOpen] = useState(false);
+  const [intakePreFill, setIntakePreFill] = useState(null);
 
   const loadData = useCallback(async () => {
     try {
@@ -85,12 +88,18 @@ export default function App() {
     try {
       const newUnit = await createUnitIntake(data);
       setIsIntakeOpen(false);
+      setIntakePreFill(null);
       await loadData();
       // Auto open detail for newly logged unit
       handleSelectUnit(newUnit.unit_id);
     } catch (err) {
       alert('Failed to log intake: ' + (err.response?.data?.detail || err.message));
     }
+  };
+
+  const handleConvertToIntake = (preFillData) => {
+    setIntakePreFill(preFillData);
+    setIsIntakeOpen(true);
   };
 
   const handleUpdateStatus = async (unitId, newStatus) => {
@@ -172,9 +181,13 @@ export default function App() {
       <Navbar 
         activeTab={activeTab} 
         setActiveTab={setActiveTab}
-        onOpenIntake={() => setIsIntakeOpen(true)}
+        onOpenIntake={() => {
+          setIntakePreFill(null);
+          setIsIntakeOpen(true);
+        }}
         onOpenAuth={() => setIsAuthOpen(true)}
         onOpenBackup={() => setIsBackupOpen(true)}
+        onOpenMarket={() => setIsMarketOpen(true)}
         search={search}
         setSearch={setSearch}
       />
@@ -253,7 +266,11 @@ export default function App() {
       {/* Quick Intake Modal */}
       {isIntakeOpen && (
         <QuickIntakeModal
-          onClose={() => setIsIntakeOpen(false)}
+          preFill={intakePreFill}
+          onClose={() => {
+            setIsIntakeOpen(false);
+            setIntakePreFill(null);
+          }}
           onSubmit={handleQuickIntakeSubmit}
         />
       )}
@@ -268,6 +285,13 @@ export default function App() {
       <BackupModal
         isOpen={isBackupOpen}
         onClose={() => setIsBackupOpen(false)}
+      />
+
+      {/* Quick Valuation / Market Research Modal */}
+      <MarketResearchModal
+        isOpen={isMarketOpen}
+        onClose={() => setIsMarketOpen(false)}
+        onConvertToIntake={handleConvertToIntake}
       />
 
     </div>

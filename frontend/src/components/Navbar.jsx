@@ -10,10 +10,11 @@ import {
   HardDrive,
   Cpu,
   BookOpen,
-  Database
+  Database,
+  Sparkles
 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAuth, onOpenBackup, search, setSearch }) {
+export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAuth, onOpenBackup, onOpenMarket, search, setSearch }) {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory Grid', icon: Table },
@@ -78,11 +79,20 @@ export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAu
             </div>
 
             <button
+              onClick={onOpenMarket}
+              title="Pre-Purchase Quick Valuation Tool"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-amber-50 hover:bg-amber-100 text-amber-800 font-bold text-xs border border-amber-300 transition-colors shrink-0 shadow-2xs"
+            >
+              <Sparkles className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden md:inline">Quick Valuation</span>
+            </button>
+
+            <button
               onClick={onOpenBackup}
               title="Database Backup & CSV Export"
               className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-300 transition-colors shrink-0"
             >
-              <Database className="w-3.5 h-3.5 text-amber-600" />
+              <Database className="w-3.5 h-3.5 text-slate-600" />
               <span className="hidden md:inline">Backup</span>
             </button>
 
@@ -91,7 +101,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAu
               title="Google Drive Security Settings"
               className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-300 transition-colors shrink-0"
             >
-              <HardDrive className="w-3.5 h-3.5 text-amber-600" />
+              <HardDrive className="w-3.5 h-3.5 text-slate-600" />
               <span className="hidden md:inline">Google Drive</span>
             </button>
 

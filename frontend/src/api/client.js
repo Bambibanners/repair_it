@@ -179,3 +179,10 @@ export const restoreDatabase = async (file) => {
   });
   return res.data;
 };
+
+export const getMarketValuation = async (brand, modelNumber, category = 'General', sellerPrice = 0) => {
+  const res = await api.get('/market/valuation', {
+    params: { brand, model_number: modelNumber, category, seller_price: sellerPrice }
+  });
+  return res.data;
+};

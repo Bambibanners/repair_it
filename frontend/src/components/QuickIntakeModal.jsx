@@ -1,16 +1,25 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { X, PlusCircle } from 'lucide-react';
 
-export default function QuickIntakeModal({ onClose, onSubmit }) {
-  const [brand, setBrand] = useState('');
-  const [modelNumber, setModelNumber] = useState('');
+export default function QuickIntakeModal({ preFill, onClose, onSubmit }) {
+  const [brand, setBrand] = useState(preFill?.brand || '');
+  const [modelNumber, setModelNumber] = useState(preFill?.model_number || '');
   const [serialNumber, setSerialNumber] = useState(`SN-${Math.floor(100000 + Math.random() * 900000)}`);
-  const [category, setCategory] = useState('Amplifier');
+  const [category, setCategory] = useState(preFill?.category || 'Amplifier');
   const [acquisitionSource, setAcquisitionSource] = useState('eBay UK');
-  const [baseCost, setBaseCost] = useState('');
+  const [baseCost, setBaseCost] = useState(preFill?.base_cost || '');
   const [cosmeticCondition, setCosmeticCondition] = useState('Good');
   const [initialSymptoms, setInitialSymptoms] = useState('');
   const [priority, setPriority] = useState(2);
+
+  useEffect(() => {
+    if (preFill) {
+      if (preFill.brand) setBrand(preFill.brand);
+      if (preFill.model_number) setModelNumber(preFill.model_number);
+      if (preFill.category) setCategory(preFill.category);
+      if (preFill.base_cost !== undefined) setBaseCost(preFill.base_cost);
+    }
+  }, [preFill]);
 
   const handleSubmit = (e) => {
     e.preventDefault();
