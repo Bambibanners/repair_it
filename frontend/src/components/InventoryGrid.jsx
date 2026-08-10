@@ -1,122 +1,110 @@
-import React, { useState, useMemo } from 'react';
+import React, { useState } from 'react';
 import { 
   Search, 
   Filter, 
   ArrowUpDown, 
+  ChevronRight, 
   Plus, 
-  ChevronRight,
-  Sparkles
+  Sparkles,
+  Layers,
+  Trash2
 } from 'lucide-react';
 
-export default function InventoryGrid({ units, onSelectUnit, onOpenIntake, search, setSearch }) {
+export default function InventoryGrid({ units, onSelectUnit, onDeleteUnit, onOpenIntake, search, setSearch }) {
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedStatus, setSelectedStatus] = useState('All');
   const [sortField, setSortField] = useState('created_at');
-  const [sortDirection, setSortDirection] = useState('desc');
+  const [sortOrder, setSortOrder] = useState('desc');
 
-  const categories = ['All', 'Amplifier', 'CD Player', 'Tape Deck', 'Turntable', 'Receiver', 'Speakers'];
+  const categories = ['All', 'Amplifier', 'Receiver', 'CD Player', 'Tape Deck', 'Turntable', 'Speakers'];
   const statuses = ['All', 'Triage', 'On Bench', 'Waiting Parts', 'Ready to Sell', 'Sold', 'Scrapped'];
 
-  const filteredUnits = useMemo(() => {
-    return units.filter((u) => {
-      const matchCat = selectedCategory === 'All' || u.category === selectedCategory;
-      const matchStat = selectedStatus === 'All' || u.system_status === selectedStatus;
-      const matchSearch = !search || 
-        u.brand.toLowerCase().includes(search.toLowerCase()) ||
-        u.model_number.toLowerCase().includes(search.toLowerCase()) ||
-        u.serial_number.toLowerCase().includes(search.toLowerCase());
+  const filteredUnits = units.filter((unit) => {
+    const matchesCategory = selectedCategory === 'All' || unit.category === selectedCategory;
+    const matchesStatus = selectedStatus === 'All' || unit.system_status === selectedStatus;
+    const searchLower = search.toLowerCase();
+    const matchesSearch = !search || 
+      unit.brand.toLowerCase().includes(searchLower) ||
+      unit.model_number.toLowerCase().includes(searchLower) ||
+      unit.serial_number.toLowerCase().includes(searchLower);
 
-      return matchCat && matchStat && matchSearch;
-    }).sort((a, b) => {
-      let valA = a[sortField];
-      let valB = b[sortField];
+    return matchesCategory && matchesStatus && matchesSearch;
+  }).sort((a, b) => {
+    let valA = a[sortField];
+    let valB = b[sortField];
 
-      if (sortField === 'cost') {
-        valA = a.base_cost;
-        valB = b.base_cost;
-      }
+    if (sortField === 'cost') {
+      valA = a.base_cost;
+      valB = b.base_cost;
+    }
 
-      if (typeof valA === 'string') {
-        return sortDirection === 'asc' 
-          ? valA.localeCompare(valB)
-          : valB.localeCompare(valA);
-      }
-      
-      return sortDirection === 'asc' ? (valA - valB) : (valB - valA);
-    });
-  }, [units, selectedCategory, selectedStatus, search, sortField, sortDirection]);
+    if (valA < valB) return sortOrder === 'asc' ? -1 : 1;
+    if (valA > valB) return sortOrder === 'asc' ? 1 : -1;
+    return 0;
+  });
 
   const handleSort = (field) => {
     if (sortField === field) {
-      setSortDirection(sortDirection === 'asc' ? 'desc' : 'asc');
+      setSortOrder(sortOrder === 'asc' ? 'desc' : 'asc');
     } else {
       setSortField(field);
-      setSortDirection('asc');
+      setSortOrder('asc');
     }
   };
 
   const getStatusBadgeClass = (status) => {
     switch (status) {
-      case 'Triage':
-        return 'bg-amber-100 text-amber-800 border-amber-300';
-      case 'On Bench':
-        return 'bg-cyan-100 text-cyan-800 border-cyan-300';
-      case 'Waiting Parts':
-        return 'bg-orange-100 text-orange-800 border-orange-300';
-      case 'Ready to Sell':
-        return 'bg-emerald-100 text-emerald-800 border-emerald-300';
-      case 'Sold':
-        return 'bg-purple-100 text-purple-800 border-purple-300';
-      case 'Scrapped':
-        return 'bg-rose-100 text-rose-800 border-rose-300';
-      default:
-        return 'bg-slate-100 text-slate-700 border-slate-300';
+      case 'Triage': return 'bg-slate-100 text-slate-800 border-slate-300';
+      case 'On Bench': return 'bg-amber-100 text-amber-900 border-amber-300 font-bold';
+      case 'Waiting Parts': return 'bg-purple-100 text-purple-900 border-purple-300';
+      case 'Ready to Sell': return 'bg-emerald-100 text-emerald-900 border-emerald-300 font-bold';
+      case 'Sold': return 'bg-blue-100 text-blue-900 border-blue-300';
+      case 'Scrapped': return 'bg-rose-100 text-rose-800 border-rose-300';
+      default: return 'bg-slate-100 text-slate-800 border-slate-300';
     }
   };
 
   return (
     <div className="space-y-4 pb-12">
       
-      {/* Header Controls */}
-      <div className="flex flex-wrap items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-sm">
+      {/* Control Bar: Filters & Search */}
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-3 bg-white p-4 rounded-2xl border border-slate-200 shadow-xs">
         
-        {/* Filters */}
-        <div className="flex flex-wrap items-center gap-2.5">
-          <div className="flex items-center space-x-1.5 text-xs font-bold text-slate-500">
-            <Filter className="w-3.5 h-3.5 text-amber-600" />
-            <span>FILTERS:</span>
-          </div>
+        {/* Category Pills */}
+        <div className="flex items-center space-x-1 overflow-x-auto pb-1 md:pb-0 max-w-full">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => setSelectedCategory(cat)}
+              className={`px-3 py-1.5 rounded-xl text-xs font-bold whitespace-nowrap transition-all ${
+                selectedCategory === cat 
+                  ? 'bg-amber-500 text-white shadow-2xs' 
+                  : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
 
-          {/* Category Selector */}
-          <select
-            value={selectedCategory}
-            onChange={(e) => setSelectedCategory(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
-          >
-            {categories.map((c) => (
-              <option key={c} value={c}>{c === 'All' ? 'All Categories' : c}</option>
-            ))}
-          </select>
-
-          {/* Status Selector */}
+        {/* Status & Search Filters */}
+        <div className="flex flex-wrap items-center gap-2">
+          
           <select
             value={selectedStatus}
             onChange={(e) => setSelectedStatus(e.target.value)}
-            className="bg-slate-50 border border-slate-300 rounded-lg px-3 py-1.5 text-xs text-slate-800 focus:outline-none focus:border-amber-500 focus:bg-white"
+            className="bg-slate-50 border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
           >
-            {statuses.map((s) => (
-              <option key={s} value={s}>{s === 'All' ? 'All Statuses' : s}</option>
+            {statuses.map((st) => (
+              <option key={st} value={st}>Status: {st}</option>
             ))}
           </select>
-        </div>
 
-        {/* Search & Actions */}
-        <div className="flex items-center space-x-2.5 w-full sm:w-auto">
-          <div className="relative flex-1 sm:w-60">
+          <div className="relative flex-1 sm:w-48">
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search serial #, make, model..."
+              placeholder="Search make, model, SN..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white"
@@ -220,9 +208,23 @@ export default function InventoryGrid({ units, onSelectUnit, onOpenIntake, searc
 
                       {/* Action */}
                       <td className="py-3.5 px-4 text-center">
-                        <span className="p-1 rounded-md bg-slate-100 text-slate-500 group-hover:text-amber-700 group-hover:bg-amber-100 transition-colors inline-block">
-                          <ChevronRight className="w-4 h-4" />
-                        </span>
+                        <div className="flex items-center justify-center space-x-1">
+                          <button
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (window.confirm(`Are you sure you want to delete ${u.brand} ${u.model_number} (SN: ${u.serial_number})?`)) {
+                                onDeleteUnit(u.unit_id);
+                              }
+                            }}
+                            className="p-1 rounded-md text-slate-400 hover:text-rose-600 hover:bg-rose-50 transition-colors"
+                            title="Delete Inventory Unit"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </button>
+                          <span className="p-1 rounded-md bg-slate-100 text-slate-500 group-hover:text-amber-700 group-hover:bg-amber-100 transition-colors inline-block">
+                            <ChevronRight className="w-4 h-4" />
+                          </span>
+                        </div>
                       </td>
                     </tr>
                   );

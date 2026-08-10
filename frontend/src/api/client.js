@@ -39,6 +39,10 @@ export const updateUnit = async (id, data) => {
   return res.data;
 };
 
+export const deleteInventoryUnit = async (id) => {
+  await api.delete(`/inventory/${id}`);
+};
+
 export const updateRepairLog = async (id, data) => {
   const res = await api.put(`/inventory/${id}/repair`, data);
   return res.data;

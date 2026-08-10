@@ -38,6 +38,7 @@ export default function UnitDetailModal({
   unit, 
   onClose, 
   onUpdateUnit, 
+  onDeleteUnit,
   onUpdateRepairLog, 
   onAddPart, 
   onUpdatePartStatus,
@@ -204,6 +205,13 @@ export default function UnitDetailModal({
       cosmetic_condition: cosmeticCondition,
       is_client_job: isClientJob
     });
+  };
+
+  const handleDeleteThisUnit = () => {
+    if (window.confirm(`Are you sure you want to PERMANENTLY delete ${unit.brand} ${unit.model_number} (SN: ${unit.serial_number}) from workshop inventory?`)) {
+      onDeleteUnit(unit.unit_id);
+      onClose();
+    }
   };
 
   const handleSaveRepairLog = () => {
@@ -390,6 +398,17 @@ export default function UnitDetailModal({
               <QrCode className="w-4 h-4 text-amber-600" />
               <span className="hidden sm:inline">QR Tag</span>
             </button>
+
+            {onDeleteUnit && (
+              <button
+                onClick={handleDeleteThisUnit}
+                className="flex items-center space-x-1 px-2.5 py-1.5 rounded-lg bg-white border border-slate-300 text-rose-600 hover:bg-rose-50 font-semibold text-xs transition-colors shadow-2xs"
+                title="Delete Unit Record"
+              >
+                <Trash2 className="w-3.5 h-3.5" />
+                <span className="hidden sm:inline">Delete</span>
+              </button>
+            )}
 
             <button 
               onClick={onClose}

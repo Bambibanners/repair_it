@@ -159,3 +159,13 @@ def update_inventory_unit(id: str, payload: InventoryUnitUpdate, db: Session = D
     detail = InventoryUnitDetail.model_validate(unit)
     detail.financial_summary = compute_profit_summary(unit)
     return detail
+
+@router.delete("/{id}", status_code=204)
+def delete_inventory_unit(id: str, db: Session = Depends(get_db)):
+    unit = db.query(InventoryUnit).filter(InventoryUnit.unit_id == id).first()
+    if not unit:
+        raise HTTPException(status_code=404, detail="Inventory unit not found")
+
+    db.delete(unit)
+    db.commit()
+    return None

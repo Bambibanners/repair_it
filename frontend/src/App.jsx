@@ -18,6 +18,7 @@ import {
   createUnitIntake, 
   updateUnitStatus,
   updateUnit,
+  deleteInventoryUnit,
   updateRepairLog,
   addPartOrder,
   updatePartOrder,
@@ -120,6 +121,18 @@ export default function App() {
     }
   };
 
+  const handleDeleteUnit = async (unitId) => {
+    try {
+      await deleteInventoryUnit(unitId);
+      if (selectedUnitId === unitId) {
+        handleCloseModal();
+      }
+      await loadData();
+    } catch (err) {
+      console.error('Failed to delete inventory unit:', err);
+    }
+  };
+
   const handleUpdateRepairLog = async (unitId, data) => {
     try {
       await updateRepairLog(unitId, data);
@@ -215,6 +228,7 @@ export default function App() {
               <InventoryGrid 
                 units={units}
                 onSelectUnit={handleSelectUnit}
+                onDeleteUnit={handleDeleteUnit}
                 onOpenIntake={() => setIsIntakeOpen(true)}
                 search={search}
                 setSearch={setSearch}
@@ -254,6 +268,7 @@ export default function App() {
           unit={unitDetail}
           onClose={handleCloseModal}
           onUpdateUnit={handleUpdateUnit}
+          onDeleteUnit={handleDeleteUnit}
           onUpdateRepairLog={handleUpdateRepairLog}
           onAddPart={handleAddPart}
           onUpdatePartStatus={handleUpdatePartStatus}
