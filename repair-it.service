@@ -1,0 +1,15 @@
+[Unit]
+Description=Repair-It Vintage Electronics Lifecycle Platform
+After=network.target
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/repair_it
+ExecStart=/home/pi/repair_it/start.sh
+Restart=always
+RestartSec=5
+Environment=PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin
+
+[Install]
+WantedBy=multi-user.target
