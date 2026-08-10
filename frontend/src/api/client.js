@@ -150,3 +150,32 @@ export const addPartCompatibility = async (partId, data) => {
 export const deletePartCompatibility = async (compatibilityId) => {
   await api.delete(`/master-parts/compatibility/${compatibilityId}`);
 };
+
+export const getQCChecklist = async (id) => {
+  const res = await api.get(`/inventory/${id}/qc`);
+  return res.data;
+};
+
+export const updateQCChecklist = async (id, data) => {
+  const res = await api.put(`/inventory/${id}/qc`, data);
+  return res.data;
+};
+
+export const getClientJob = async (id) => {
+  const res = await api.get(`/inventory/${id}/client-job`);
+  return res.data;
+};
+
+export const updateClientJob = async (id, data) => {
+  const res = await api.post(`/inventory/${id}/client-job`, data);
+  return res.data;
+};
+
+export const restoreDatabase = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await api.post('/system/restore', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+};

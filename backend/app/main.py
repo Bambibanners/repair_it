@@ -3,13 +3,22 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 import os
+from sqlalchemy import text
 from .database import engine, Base
 from .seed import seed_database
 from .gdrive import LOCAL_UPLOADS_DIR
-from .routers import inventory, repair, parts, sales, dashboard, media, auth, master_parts
+from .routers import inventory, repair, parts, sales, dashboard, media, auth, master_parts, qc, backup, client_jobs
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
+
+# Auto Migration for is_client_job column if missing
+with engine.connect() as conn:
+    try:
+        conn.execute(text("ALTER TABLE inventory_units ADD COLUMN is_client_job BOOLEAN DEFAULT 0"))
+        conn.commit()
+    except Exception:
+        pass # Column already exists
 
 # Seed database with sample vintage gear
 seed_database()
@@ -42,6 +51,9 @@ app.include_router(dashboard.router)
 app.include_router(media.router)
 app.include_router(auth.router)
 app.include_router(master_parts.router)
+app.include_router(qc.router)
+app.include_router(backup.router)
+app.include_router(client_jobs.router)
 
 @app.get("/api/v1/health")
 def health_check():

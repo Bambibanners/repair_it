@@ -19,6 +19,7 @@ class InventoryUnit(Base):
     base_cost = Column(Float, nullable=False, default=0.0) # GBP purchase price
     cosmetic_condition = Column(String(50), nullable=False, default="Good") # Mint, Good, Fair, Poor, For Parts
     system_status = Column(String(50), nullable=False, default="Triage") # Triage, On Bench, Waiting Parts, Ready to Sell, Sold, Scrapped
+    is_client_job = Column(Boolean, default=False)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships
@@ -26,6 +27,8 @@ class InventoryUnit(Base):
     part_orders = relationship("PartOrder", back_populates="unit", cascade="all, delete-orphan")
     sales_listings = relationship("SalesListing", back_populates="unit", cascade="all, delete-orphan")
     media_items = relationship("UnitMedia", back_populates="unit", cascade="all, delete-orphan")
+    qc_checklist = relationship("QCChecklist", back_populates="unit", uselist=False, cascade="all, delete-orphan")
+    client_job = relationship("ClientJob", back_populates="unit", uselist=False, cascade="all, delete-orphan")
 
 class RepairLog(Base):
     __tablename__ = "repair_logs"
@@ -39,6 +42,40 @@ class RepairLog(Base):
     updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     unit = relationship("InventoryUnit", back_populates="repair_log")
+
+class QCChecklist(Base):
+    __tablename__ = "qc_checklists"
+
+    qc_id = Column(String(36), primary_key=True, default=generate_uuid)
+    unit_id = Column(String(36), ForeignKey("inventory_units.unit_id"), nullable=False)
+    dc_offset_mv = Column(Float, nullable=True)
+    bias_current_ma = Column(Float, nullable=True)
+    channel_balance_ok = Column(Boolean, default=True)
+    potentiometers_flushed = Column(Boolean, default=True)
+    burn_in_hours = Column(Integer, default=24)
+    frequency_response_ok = Column(Boolean, default=True)
+    visual_inspection_ok = Column(Boolean, default=True)
+    tech_signature = Column(String(100), default="Master Tech")
+    notes = Column(Text, nullable=True)
+    completed_at = Column(DateTime, default=datetime.utcnow)
+
+    unit = relationship("InventoryUnit", back_populates="qc_checklist")
+
+class ClientJob(Base):
+    __tablename__ = "client_jobs"
+
+    job_id = Column(String(36), primary_key=True, default=generate_uuid)
+    unit_id = Column(String(36), ForeignKey("inventory_units.unit_id"), nullable=False)
+    client_name = Column(String(100), nullable=False)
+    client_phone = Column(String(50), nullable=True)
+    client_email = Column(String(100), nullable=True)
+    deposit_paid = Column(Float, default=0.0)
+    labor_rate_per_hr = Column(Float, default=45.00)
+    labor_hours_spent = Column(Float, default=0.0)
+    invoice_notes = Column(Text, nullable=True)
+    invoice_status = Column(String(50), default="Draft") # Draft, Sent, Paid
+
+    unit = relationship("InventoryUnit", back_populates="client_job")
 
 class PartOrder(Base):
     __tablename__ = "part_orders"

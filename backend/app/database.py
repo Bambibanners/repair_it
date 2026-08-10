@@ -4,6 +4,7 @@ import os
 
 # SQLite database file stored locally in backend directory
 DATABASE_URL = os.getenv("DATABASE_URL", "sqlite:///./repair_it.db")
+SQLITE_DB_PATH = os.path.abspath(os.path.join(os.path.dirname(__file__), "../repair_it.db"))
 
 engine = create_engine(
     DATABASE_URL,

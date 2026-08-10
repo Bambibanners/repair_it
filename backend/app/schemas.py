@@ -2,6 +2,55 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
 
+# QC Checklist Schemas
+class QCChecklistBase(BaseModel):
+    dc_offset_mv: Optional[float] = None
+    bias_current_ma: Optional[float] = None
+    channel_balance_ok: bool = True
+    potentiometers_flushed: bool = True
+    burn_in_hours: int = 24
+    frequency_response_ok: bool = True
+    visual_inspection_ok: bool = True
+    tech_signature: Optional[str] = "Master Tech"
+    notes: Optional[str] = None
+
+class QCChecklistUpdate(QCChecklistBase):
+    pass
+
+class QCChecklistSchema(QCChecklistBase):
+    qc_id: str
+    unit_id: str
+    completed_at: Optional[datetime] = None
+
+    model_config = ConfigDict(from_attributes=True)
+
+# Client Job Schemas
+class ClientJobBase(BaseModel):
+    client_name: str
+    client_phone: Optional[str] = None
+    client_email: Optional[str] = None
+    deposit_paid: float = 0.0
+    labor_rate_per_hr: float = 45.00
+    labor_hours_spent: float = 0.0
+    invoice_notes: Optional[str] = None
+    invoice_status: str = "Draft"
+
+class ClientJobUpdate(BaseModel):
+    client_name: Optional[str] = None
+    client_phone: Optional[str] = None
+    client_email: Optional[str] = None
+    deposit_paid: Optional[float] = None
+    labor_rate_per_hr: Optional[float] = None
+    labor_hours_spent: Optional[float] = None
+    invoice_notes: Optional[str] = None
+    invoice_status: Optional[str] = None
+
+class ClientJobSchema(ClientJobBase):
+    job_id: str
+    unit_id: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 # Master Parts Catalog Schemas
 class PartCompatibilityBase(BaseModel):
     brand: str
@@ -160,6 +209,7 @@ class InventoryUnitBase(BaseModel):
     base_cost: float = 0.0
     cosmetic_condition: str = "Good"
     system_status: str = "Triage"
+    is_client_job: bool = False
 
 class InventoryUnitCreate(InventoryUnitBase):
     initial_symptoms: Optional[str] = None
@@ -177,6 +227,7 @@ class InventoryUnitUpdate(BaseModel):
     base_cost: Optional[float] = None
     cosmetic_condition: Optional[str] = None
     system_status: Optional[str] = None
+    is_client_job: Optional[bool] = None
 
 class NetProfitBreakdown(BaseModel):
     unit_id: str
@@ -200,6 +251,8 @@ class InventoryUnitDetail(InventoryUnitBase):
     part_orders: List[PartOrderSchema] = []
     sales_listings: List[SalesListingSchema] = []
     media_items: List[UnitMediaSchema] = []
+    qc_checklist: Optional[QCChecklistSchema] = None
+    client_job: Optional[ClientJobSchema] = None
     financial_summary: Optional[NetProfitBreakdown] = None
 
     model_config = ConfigDict(from_attributes=True)

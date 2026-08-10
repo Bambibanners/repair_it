@@ -9,6 +9,7 @@ import ServiceManualsLibrary from './components/ServiceManualsLibrary';
 import UnitDetailModal from './components/UnitDetailModal';
 import QuickIntakeModal from './components/QuickIntakeModal';
 import GoogleDriveAuthModal from './components/GoogleDriveAuthModal';
+import BackupModal from './components/BackupModal';
 import { 
   getDashboardStats, 
   getInventory, 
@@ -37,6 +38,7 @@ export default function App() {
   const [unitDetail, setUnitDetail] = useState(null);
   const [isIntakeOpen, setIsIntakeOpen] = useState(false);
   const [isAuthOpen, setIsAuthOpen] = useState(false);
+  const [isBackupOpen, setIsBackupOpen] = useState(false);
 
   const loadData = useCallback(async () => {
     try {
@@ -172,6 +174,7 @@ export default function App() {
         setActiveTab={setActiveTab}
         onOpenIntake={() => setIsIntakeOpen(true)}
         onOpenAuth={() => setIsAuthOpen(true)}
+        onOpenBackup={() => setIsBackupOpen(true)}
         search={search}
         setSearch={setSearch}
       />
@@ -259,6 +262,12 @@ export default function App() {
       <GoogleDriveAuthModal
         isOpen={isAuthOpen}
         onClose={() => setIsAuthOpen(false)}
+      />
+
+      {/* Backup & CSV Export Modal */}
+      <BackupModal
+        isOpen={isBackupOpen}
+        onClose={() => setIsBackupOpen(false)}
       />
 
     </div>

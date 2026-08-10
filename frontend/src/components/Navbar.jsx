@@ -9,10 +9,11 @@ import {
   Search,
   HardDrive,
   Cpu,
-  BookOpen
+  BookOpen,
+  Database
 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAuth, search, setSearch }) {
+export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAuth, onOpenBackup, search, setSearch }) {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory Grid', icon: Table },
@@ -75,6 +76,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAu
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
               />
             </div>
+
+            <button
+              onClick={onOpenBackup}
+              title="Database Backup & CSV Export"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-300 transition-colors shrink-0"
+            >
+              <Database className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden md:inline">Backup</span>
+            </button>
 
             <button
               onClick={onOpenAuth}

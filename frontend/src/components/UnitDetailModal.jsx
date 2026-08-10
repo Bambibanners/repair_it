@@ -13,15 +13,26 @@ import {
   FileText,
   UploadCloud,
   ExternalLink,
-  Link as LinkIcon
+  Link as LinkIcon,
+  CheckSquare,
+  UserCheck,
+  QrCode,
+  Printer,
+  ShieldCheck,
+  DollarSign
 } from 'lucide-react';
 import { 
   uploadUnitMedia, 
   deleteUnitMedia, 
   searchServiceManuals, 
   uploadServiceManual, 
-  linkManualToModel 
+  linkManualToModel,
+  getQCChecklist,
+  updateQCChecklist,
+  getClientJob,
+  updateClientJob
 } from '../api/client';
+import QRCodeModal from './QRCodeModal';
 
 export default function UnitDetailModal({ 
   unit, 
@@ -40,6 +51,7 @@ export default function UnitDetailModal({
   const [status, setStatus] = useState(unit?.system_status || 'Triage');
   const [baseCost, setBaseCost] = useState(unit?.base_cost || 0);
   const [cosmeticCondition, setCosmeticCondition] = useState(unit?.cosmetic_condition || 'Good');
+  const [isClientJob, setIsClientJob] = useState(unit?.is_client_job || false);
 
   // Form states for Repair Log
   const [priority, setPriority] = useState(unit?.repair_log?.priority || 2);
@@ -79,11 +91,36 @@ export default function UnitDetailModal({
   const [linkBrand, setLinkBrand] = useState('');
   const [linkModel, setLinkModel] = useState('');
 
+  // QC Checklist state
+  const [dcOffset, setDcOffset] = useState(0.5);
+  const [biasCurrent, setBiasCurrent] = useState(25.0);
+  const [channelBalance, setChannelBalance] = useState(true);
+  const [potsFlushed, setPotsFlushed] = useState(true);
+  const [burnInHours, setBurnInHours] = useState(24);
+  const [freqResponse, setFreqResponse] = useState(true);
+  const [visualInspection, setVisualInspection] = useState(true);
+  const [techSig, setTechSig] = useState('Master Tech');
+  const [qcNotes, setQcNotes] = useState('');
+
+  // Client Job state
+  const [clientName, setClientName] = useState('');
+  const [clientPhone, setClientPhone] = useState('');
+  const [clientEmail, setClientEmail] = useState('');
+  const [depositPaid, setDepositPaid] = useState(0.0);
+  const [laborRate, setLaborRate] = useState(45.0);
+  const [laborHours, setLaborHours] = useState(1.0);
+  const [invoiceNotes, setInvoiceNotes] = useState('');
+  const [invoiceStatus, setInvoiceStatus] = useState('Draft');
+
+  // QR Modal State
+  const [isQROpen, setIsQROpen] = useState(false);
+
   useEffect(() => {
     if (unit) {
       setStatus(unit.system_status);
       setBaseCost(unit.base_cost);
       setCosmeticCondition(unit.cosmetic_condition);
+      setIsClientJob(unit.is_client_job || false);
       setMediaList(unit.media_items || []);
 
       if (unit.repair_log) {
@@ -104,6 +141,34 @@ export default function UnitDetailModal({
       }
 
       refreshManuals();
+
+      // Load QC & Client Job
+      getQCChecklist(unit.unit_id).then((qc) => {
+        if (qc) {
+          setDcOffset(qc.dc_offset_mv ?? 0.5);
+          setBiasCurrent(qc.bias_current_ma ?? 25.0);
+          setChannelBalance(qc.channel_balance_ok ?? true);
+          setPotsFlushed(qc.potentiometers_flushed ?? true);
+          setBurnInHours(qc.burn_in_hours ?? 24);
+          setFreqResponse(qc.frequency_response_ok ?? true);
+          setVisualInspection(qc.visual_inspection_ok ?? true);
+          setTechSig(qc.tech_signature || 'Master Tech');
+          setQcNotes(qc.notes || '');
+        }
+      }).catch(() => {});
+
+      getClientJob(unit.unit_id).then((job) => {
+        if (job) {
+          setClientName(job.client_name || '');
+          setClientPhone(job.client_phone || '');
+          setClientEmail(job.client_email || '');
+          setDepositPaid(job.deposit_paid || 0.0);
+          setLaborRate(job.labor_rate_per_hr || 45.0);
+          setLaborHours(job.labor_hours_spent || 1.0);
+          setInvoiceNotes(job.invoice_notes || '');
+          setInvoiceStatus(job.invoice_status || 'Draft');
+        }
+      }).catch(() => {});
     }
   }, [unit]);
 
@@ -128,11 +193,16 @@ export default function UnitDetailModal({
     ? (currentSalePrice - (totalCostBasis + currentFees + currentShipping))
     : 0;
 
+  // Client Job Invoice Calculations
+  const computedLaborTotal = (parseFloat(laborHours) || 0) * (parseFloat(laborRate) || 0);
+  const computedInvoiceTotal = computedLaborTotal + partsTotal - (parseFloat(depositPaid) || 0);
+
   const handleSaveHardware = () => {
     onUpdateUnit(unit.unit_id, {
       system_status: status,
       base_cost: parseFloat(baseCost),
-      cosmetic_condition: cosmeticCondition
+      cosmetic_condition: cosmeticCondition,
+      is_client_job: isClientJob
     });
   };
 
@@ -248,39 +318,97 @@ export default function UnitDetailModal({
     }
   };
 
+  const handleSaveQC = async () => {
+    try {
+      await updateQCChecklist(unit.unit_id, {
+        dc_offset_mv: parseFloat(dcOffset),
+        bias_current_ma: parseFloat(biasCurrent),
+        channel_balance_ok: channelBalance,
+        potentiometers_flushed: potsFlushed,
+        burn_in_hours: parseInt(burnInHours),
+        frequency_response_ok: freqResponse,
+        visual_inspection_ok: visualInspection,
+        tech_signature: techSig,
+        notes: qcNotes
+      });
+      alert('QC Calibration Checklist saved!');
+    } catch (err) {
+      alert('Failed to save QC Checklist: ' + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const handleSaveClientJob = async () => {
+    try {
+      await updateClientJob(unit.unit_id, {
+        client_name: clientName,
+        client_phone: clientPhone,
+        client_email: clientEmail,
+        deposit_paid: parseFloat(depositPaid) || 0,
+        labor_rate_per_hr: parseFloat(laborRate) || 45.0,
+        labor_hours_spent: parseFloat(laborHours) || 0,
+        invoice_notes: invoiceNotes,
+        invoice_status: invoiceStatus
+      });
+      alert('Client repair job details saved!');
+    } catch (err) {
+      alert('Failed to save Client Job: ' + (err.response?.data?.detail || err.message));
+    }
+  };
+
+  const handlePrintCertificate = () => {
+    window.print();
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
-      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col modal-shadow overflow-hidden">
+      <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col modal-shadow overflow-hidden print:border-none print:shadow-none print:max-h-full print:w-full">
         
         {/* Modal Top Header */}
-        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex items-start justify-between">
+        <div className="p-4 sm:p-5 border-b border-slate-200 bg-slate-50 flex items-start justify-between print:hidden">
           <div>
             <div className="flex flex-wrap items-center gap-2">
               <h2 className="text-xl sm:text-2xl font-bold text-slate-900 font-mono">{unit.brand} {unit.model_number}</h2>
               <span className="px-2.5 py-0.5 rounded-full text-xs font-semibold bg-amber-100 text-amber-800 border border-amber-300">
                 {unit.category}
               </span>
+              {isClientJob && (
+                <span className="px-2.5 py-0.5 rounded-full text-xs font-bold bg-purple-100 text-purple-800 border border-purple-300">
+                  Client Repair Job
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 font-mono mt-1">
               Serial #: <span className="text-slate-800 font-medium">{unit.serial_number}</span> • Acquisition: <span className="text-slate-800 font-medium">{unit.acquisition_source || 'N/A'}</span>
             </p>
           </div>
           
-          <button 
-            onClick={onClose}
-            className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors shrink-0"
-          >
-            <X className="w-5 h-5" />
-          </button>
+          <div className="flex items-center space-x-2">
+            <button
+              onClick={() => setIsQROpen(true)}
+              className="flex items-center space-x-1.5 px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold text-xs hover:bg-amber-50 hover:text-amber-800 hover:border-amber-300 transition-colors shadow-2xs"
+            >
+              <QrCode className="w-4 h-4 text-amber-600" />
+              <span className="hidden sm:inline">QR Tag</span>
+            </button>
+
+            <button 
+              onClick={onClose}
+              className="p-1.5 rounded-lg bg-white border border-slate-200 hover:bg-slate-100 text-slate-500 hover:text-slate-900 transition-colors shrink-0"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
 
         {/* Tabs Bar */}
-        <div className="flex border-b border-slate-200 bg-slate-50/50 px-4 sm:px-6 gap-1 pt-2 overflow-x-auto">
+        <div className="flex border-b border-slate-200 bg-slate-50/50 px-4 sm:px-6 gap-1 pt-2 overflow-x-auto print:hidden">
           {[
             { id: 'hardware', label: 'Hardware Details', icon: HardDrive },
             { id: 'repair', label: 'Repair Log & Workbench', icon: Wrench },
             { id: 'parts', label: `Parts Consumed (${parts.length})`, icon: Package },
             { id: 'media', label: `Media & Manuals (${mediaList.length})`, icon: Folder },
+            { id: 'qc', label: 'QC & Certificate', icon: CheckSquare },
+            { id: 'client', label: 'Client Repair Job', icon: UserCheck },
             { id: 'financials', label: 'Financials & Exit', icon: TrendingUp },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -353,13 +481,17 @@ export default function UnitDetailModal({
                 </div>
 
                 <div>
-                  <label className="block text-xs font-bold text-slate-700 mb-1">Acquisition Source</label>
-                  <input
-                    type="text"
-                    disabled
-                    value={unit.acquisition_source || 'Unspecified'}
-                    className="w-full bg-slate-100 border border-slate-200 rounded-xl p-2.5 text-xs text-slate-500 cursor-not-allowed"
-                  />
+                  <label className="block text-xs font-bold text-slate-700 mb-1">Job Type</label>
+                  <div className="flex items-center space-x-2 pt-2">
+                    <input
+                      type="checkbox"
+                      id="is_client_job"
+                      checked={isClientJob}
+                      onChange={(e) => setIsClientJob(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
+                    />
+                    <label htmlFor="is_client_job" className="text-xs font-bold text-slate-800">Mark as External Client Repair Job</label>
+                  </div>
                 </div>
 
               </div>
@@ -663,31 +795,9 @@ export default function UnitDetailModal({
                             <span className="font-bold text-slate-900">{man.title}</span>
                             <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-200 text-slate-700 font-semibold">{man.doc_type || 'Service Manual'}</span>
                           </div>
-                          {man.compatibilities && man.compatibilities.length > 0 && (
-                            <div className="flex flex-wrap items-center gap-1 mt-1 pl-6">
-                              <span className="text-[10px] text-slate-400">Linked Models:</span>
-                              {man.compatibilities.map(c => (
-                                <span key={c.compatibility_id} className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300">
-                                  {c.brand} {c.model_number}
-                                </span>
-                              ))}
-                            </div>
-                          )}
                         </div>
 
-                        <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
-                          <button
-                            onClick={() => {
-                              setLinkingManualId(man.manual_id);
-                              setLinkBrand(unit.brand);
-                              setLinkModel('');
-                            }}
-                            className="px-2.5 py-1 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-[11px] flex items-center space-x-1"
-                          >
-                            <LinkIcon className="w-3 h-3 text-amber-600" />
-                            <span>+ Link Model</span>
-                          </button>
-
+                        <div className="flex items-center space-x-2 shrink-0">
                           {man.web_view_link && (
                             <a
                               href={man.web_view_link}
@@ -704,97 +814,253 @@ export default function UnitDetailModal({
                     ))}
                   </div>
                 )}
-
-                {/* Form to Link Existing Manual to Another Model */}
-                {linkingManualId && (
-                  <form onSubmit={handleLinkManualModel} className="p-3 rounded-xl bg-amber-50 border border-amber-300 space-y-2 text-xs">
-                    <span className="font-bold text-amber-900 block">Cross-Reference Manual to Additional Equipment Model</span>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                      <input
-                        type="text"
-                        required
-                        placeholder="Brand (e.g. Pioneer)"
-                        value={linkBrand}
-                        onChange={(e) => setLinkBrand(e.target.value)}
-                        className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
-                      />
-                      <input
-                        type="text"
-                        required
-                        placeholder="Model Number (e.g. PD-7030)"
-                        value={linkModel}
-                        onChange={(e) => setLinkModel(e.target.value)}
-                        className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
-                      />
-                    </div>
-                    <div className="flex justify-end space-x-2">
-                      <button
-                        type="button"
-                        onClick={() => setLinkingManualId(null)}
-                        className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold text-xs"
-                      >
-                        Cancel
-                      </button>
-                      <button
-                        type="submit"
-                        className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs"
-                      >
-                        Link Model
-                      </button>
-                    </div>
-                  </form>
-                )}
-
-                {/* Upload Manual Form */}
-                <form onSubmit={handleUploadManual} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
-                  <span className="font-bold text-slate-800 block">Add New PDF Service Manual / Schematic</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
-                    <input
-                      type="text"
-                      required
-                      placeholder="Title (e.g. Pioneer PD-5030 / PD-6030 Service Manual)"
-                      value={manualTitle}
-                      onChange={(e) => setManualTitle(e.target.value)}
-                      className="sm:col-span-2 bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
-                    />
-
-                    <select
-                      value={manualDocType}
-                      onChange={(e) => setManualDocType(e.target.value)}
-                      className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none"
-                    >
-                      <option value="Service Manual">Service Manual</option>
-                      <option value="Schematic">Schematic / Wiring</option>
-                      <option value="Alignment Guide">Alignment Guide</option>
-                      <option value="User Manual">User Manual</option>
-                      <option value="Parts List">Parts List</option>
-                    </select>
-                  </div>
-
-                  <input
-                    type="file"
-                    required
-                    accept=".pdf"
-                    onChange={(e) => setManualFile(e.target.files[0])}
-                    className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none"
-                  />
-
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={manualUploading || !manualFile}
-                      className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold text-xs transition-colors shadow-xs"
-                    >
-                      {manualUploading ? 'Uploading & Indexing PDF...' : 'Upload & Index PDF'}
-                    </button>
-                  </div>
-                </form>
               </div>
 
             </div>
           )}
 
-          {/* TAB 5: Financials & Exit Strategy */}
+          {/* TAB 5: QC Checklist & Printable Certificate */}
+          {activeTab === 'qc' && (
+            <div className="space-y-6">
+              <div className="p-4 sm:p-5 rounded-2xl bg-amber-50 border border-amber-300 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <ShieldCheck className="w-5 h-5 text-amber-800" />
+                    <h3 className="text-sm font-bold text-amber-900 font-mono">BENCH QUALITY CONTROL & CALIBRATION</h3>
+                  </div>
+
+                  <button
+                    onClick={handlePrintCertificate}
+                    className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-slate-900 hover:bg-slate-800 text-white font-bold text-xs shadow-xs transition-colors"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Restoration Certificate</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">DC Offset Measurement (mV)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={dcOffset}
+                      onChange={(e) => setDcOffset(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Bias Current Measurement (mA)</label>
+                    <input
+                      type="number"
+                      step="0.1"
+                      value={biasCurrent}
+                      onChange={(e) => setBiasCurrent(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">24-Hour Burn-In Test (Hours)</label>
+                    <input
+                      type="number"
+                      value={burnInHours}
+                      onChange={(e) => setBurnInHours(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono font-bold text-slate-900 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Master Tech Signature</label>
+                    <input
+                      type="text"
+                      value={techSig}
+                      onChange={(e) => setTechSig(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-mono text-slate-900 focus:outline-none focus:border-amber-500"
+                    />
+                  </div>
+                </div>
+
+                {/* Inspection Toggles */}
+                <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 text-xs pt-2">
+                  <label className="flex items-center space-x-2 bg-white p-2.5 rounded-xl border border-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={channelBalance}
+                      onChange={(e) => setChannelBalance(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded"
+                    />
+                    <span className="font-bold text-slate-800">Channel Balance OK</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2 bg-white p-2.5 rounded-xl border border-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={potsFlushed}
+                      onChange={(e) => setPotsFlushed(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded"
+                    />
+                    <span className="font-bold text-slate-800">Pots DeoxIT Flushed</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2 bg-white p-2.5 rounded-xl border border-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={freqResponse}
+                      onChange={(e) => setFreqResponse(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded"
+                    />
+                    <span className="font-bold text-slate-800">Freq Response OK</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2 bg-white p-2.5 rounded-xl border border-slate-200 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={visualInspection}
+                      onChange={(e) => setVisualInspection(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded"
+                    />
+                    <span className="font-bold text-slate-800">Chassis Cleaned</span>
+                  </label>
+                </div>
+
+                <div className="pt-2 flex justify-end">
+                  <button
+                    onClick={handleSaveQC}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-xs transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Save QC Checklist</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 6: Client Repair Job */}
+          {activeTab === 'client' && (
+            <div className="space-y-6">
+              <div className="p-4 sm:p-5 rounded-2xl bg-purple-50 border border-purple-200 space-y-4">
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <UserCheck className="w-5 h-5 text-purple-800" />
+                    <h3 className="text-sm font-bold text-purple-900 font-mono">CUSTOMER REPAIR & INVOICING</h3>
+                  </div>
+
+                  <button
+                    onClick={handlePrintCertificate}
+                    className="flex items-center space-x-1.5 px-3.5 py-1.5 rounded-xl bg-purple-900 hover:bg-purple-800 text-white font-bold text-xs shadow-xs transition-colors"
+                  >
+                    <Printer className="w-4 h-4" />
+                    <span>Print Customer Invoice</span>
+                  </button>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs">
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Customer Name *</label>
+                    <input
+                      type="text"
+                      value={clientName}
+                      onChange={(e) => setClientName(e.target.value)}
+                      placeholder="John Smith"
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Phone Number</label>
+                    <input
+                      type="text"
+                      value={clientPhone}
+                      onChange={(e) => setClientPhone(e.target.value)}
+                      placeholder="07700 900123"
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Email Address</label>
+                    <input
+                      type="email"
+                      value={clientEmail}
+                      onChange={(e) => setClientEmail(e.target.value)}
+                      placeholder="john@example.com"
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 text-xs text-slate-900 focus:outline-none focus:border-purple-500"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 text-xs font-mono">
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Labor Rate (£/hr)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={laborRate}
+                      onChange={(e) => setLaborRate(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-900 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Labor Hours Worked</label>
+                    <input
+                      type="number"
+                      step="0.25"
+                      value={laborHours}
+                      onChange={(e) => setLaborHours(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-slate-900 focus:outline-none"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block font-bold text-slate-800 mb-1">Deposit Paid (£)</label>
+                    <input
+                      type="number"
+                      step="0.01"
+                      value={depositPaid}
+                      onChange={(e) => setDepositPaid(e.target.value)}
+                      className="w-full bg-white border border-slate-300 rounded-xl p-2.5 font-bold text-emerald-700 focus:outline-none"
+                    />
+                  </div>
+                </div>
+
+                {/* Total Invoice Calculation Box */}
+                <div className="bg-white p-4 rounded-xl border border-purple-200 font-mono text-xs space-y-1.5">
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Labor Charge ({laborHours} hrs @ £{parseFloat(laborRate || 0).toFixed(2)}/hr):</span>
+                    <span className="font-bold text-slate-900">£{computedLaborTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between">
+                    <span className="text-slate-600">Parts Used Total:</span>
+                    <span className="font-bold text-slate-900">£{partsTotal.toFixed(2)}</span>
+                  </div>
+                  <div className="flex justify-between text-emerald-700">
+                    <span>Deposit Paid Credit:</span>
+                    <span className="font-bold">-£{parseFloat(depositPaid || 0).toFixed(2)}</span>
+                  </div>
+                  <div className="pt-2 border-t border-purple-100 flex justify-between text-sm font-bold text-purple-900">
+                    <span>BALANCE DUE ON PICKUP:</span>
+                    <span>£{computedInvoiceTotal.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    onClick={handleSaveClientJob}
+                    className="flex items-center space-x-2 px-4 py-2 rounded-xl bg-purple-700 hover:bg-purple-800 text-white font-semibold text-xs shadow-xs transition-colors"
+                  >
+                    <Save className="w-4 h-4" />
+                    <span>Save Client Job & Invoice</span>
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB 7: Financials & Exit Strategy */}
           {activeTab === 'financials' && (
             <div className="space-y-5">
               
@@ -928,6 +1194,13 @@ export default function UnitDetailModal({
         </div>
 
       </div>
+
+      {/* QR Code Modal */}
+      <QRCodeModal
+        unit={unit}
+        isOpen={isQROpen}
+        onClose={() => setIsQROpen(false)}
+      />
     </div>
   );
 }
