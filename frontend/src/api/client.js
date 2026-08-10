@@ -102,3 +102,18 @@ export const searchServiceManuals = async (brand, modelNumber) => {
   });
   return res.data;
 };
+
+export const saveGoogleOAuthToken = async (payload) => {
+  const res = await api.post('/auth/google', payload);
+  return res.data;
+};
+
+export const getGoogleAuthStatus = async () => {
+  const res = await api.get('/auth/google/status');
+  return res.data;
+};
+
+export const googleLogout = async () => {
+  const res = await api.post('/auth/google/logout');
+  return res.data;
+};

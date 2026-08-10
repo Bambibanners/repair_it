@@ -6,10 +6,11 @@ import {
   Kanban, 
   TrendingUp, 
   PlusCircle,
-  Search
+  Search,
+  HardDrive
 } from 'lucide-react';
 
-export default function Navbar({ activeTab, setActiveTab, onOpenIntake, search, setSearch }) {
+export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAuth, search, setSearch }) {
   const tabs = [
     { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
     { id: 'inventory', label: 'Inventory Grid', icon: Table },
@@ -59,8 +60,8 @@ export default function Navbar({ activeTab, setActiveTab, onOpenIntake, search, 
           </nav>
 
           {/* Actions: Search & Quick Intake */}
-          <div className="flex items-center space-x-2.5 shrink-0 w-full sm:w-auto justify-between sm:justify-end mt-1 sm:mt-0">
-            <div className="relative flex-1 sm:w-48 lg:w-60">
+          <div className="flex items-center space-x-2 shrink-0 w-full sm:w-auto justify-between sm:justify-end mt-1 sm:mt-0">
+            <div className="relative flex-1 sm:w-44 lg:w-56">
               <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
               <input
                 type="text"
@@ -70,6 +71,15 @@ export default function Navbar({ activeTab, setActiveTab, onOpenIntake, search, 
                 className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white transition-colors"
               />
             </div>
+
+            <button
+              onClick={onOpenAuth}
+              title="Google Drive Security Settings"
+              className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-slate-100 hover:bg-slate-200 text-slate-700 font-semibold text-xs border border-slate-300 transition-colors shrink-0"
+            >
+              <HardDrive className="w-3.5 h-3.5 text-amber-600" />
+              <span className="hidden md:inline">Google Drive</span>
+            </button>
 
             <button
               onClick={onOpenIntake}

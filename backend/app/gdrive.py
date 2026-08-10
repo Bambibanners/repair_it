@@ -3,9 +3,9 @@ import uuid
 import shutil
 from typing import Optional, Dict, Any
 
-# Google API client imports with safety fallback
 try:
     from google.oauth2 import service_account
+    from google.oauth2.credentials import Credentials as UserCredentials
     from googleapiclient.discovery import build
     from googleapiclient.http import MediaFileUpload
     GDRIVE_AVAILABLE = True
@@ -18,40 +18,52 @@ LOCAL_UPLOADS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../
 os.makedirs(LOCAL_UPLOADS_DIR, exist_ok=True)
 
 class GoogleDriveManager:
-    def __init__(self):
-        self.service = None
-        self.is_gdrive_active = False
+    def get_service_for_token(self, access_token: Optional[str] = None):
+        """
+        Builds a Google Drive service object using a User OAuth Token if provided,
+        otherwise falls back to Service Account credentials file if present.
+        """
+        if not GDRIVE_AVAILABLE:
+            return None
 
-        if GDRIVE_AVAILABLE and os.path.exists(CREDENTIALS_FILE):
+        # 1. Try User OAuth Token
+        if access_token:
+            try:
+                creds = UserCredentials(token=access_token)
+                return build('drive', 'v3', credentials=creds)
+            except Exception as e:
+                print(f"[GoogleDrive] Error building service from OAuth token: {e}")
+
+        # 2. Try Service Account JSON
+        if os.path.exists(CREDENTIALS_FILE):
             try:
                 scopes = ['https://www.googleapis.com/auth/drive.file']
                 creds = service_account.Credentials.from_service_account_file(
                     CREDENTIALS_FILE, scopes=scopes
                 )
-                self.service = build('drive', 'v3', credentials=creds)
-                self.is_gdrive_active = True
-                print(f"[GoogleDrive] Successfully connected to Google Drive API via {CREDENTIALS_FILE}")
+                return build('drive', 'v3', credentials=creds)
             except Exception as e:
-                print(f"[GoogleDrive] Warning: Failed to initialize Google Drive service: {e}")
-                self.is_gdrive_active = False
-        else:
-            print("[GoogleDrive] Running in Local Storage Mode (gdrive_credentials.json not found). Uploads will save locally.")
+                print(f"[GoogleDrive] Error building service from service account: {e}")
+
+        return None
 
     def upload_file(
         self, 
         file_path: str, 
         file_name: str, 
         mime_type: str, 
-        folder_name: Optional[str] = "Repair-It Media"
+        folder_name: Optional[str] = "Repair-It Media",
+        access_token: Optional[str] = None
     ) -> Dict[str, Any]:
         """
         Uploads a file to Google Drive (or local storage fallback).
-        Returns metadata containing file_id, web_view_link, thumbnail_link.
         """
-        if self.is_gdrive_active and self.service:
+        service = self.get_service_for_token(access_token)
+
+        if service:
             try:
                 # 1. Check/create target Google Drive folder
-                folder_id = self._get_or_create_folder(folder_name)
+                folder_id = self._get_or_create_folder(service, folder_name)
 
                 # 2. Prepare upload payload
                 file_metadata = {
@@ -60,7 +72,7 @@ class GoogleDriveManager:
                 }
                 media = MediaFileUpload(file_path, mimetype=mime_type, resumable=True)
 
-                drive_file = self.service.files().create(
+                drive_file = service.files().create(
                     body=file_metadata,
                     media_body=media,
                     fields='id, name, webViewLink, thumbnailLink'
@@ -68,7 +80,7 @@ class GoogleDriveManager:
 
                 # 3. Set public/domain read permissions on file
                 try:
-                    self.service.permissions().create(
+                    service.permissions().create(
                         fileId=drive_file['id'],
                         body={'type': 'anyone', 'role': 'reader'}
                     ).execute()
@@ -97,12 +109,12 @@ class GoogleDriveManager:
             "storage_mode": "local"
         }
 
-    def _get_or_create_folder(self, folder_name: str) -> Optional[str]:
-        if not self.service or not folder_name:
+    def _get_or_create_folder(self, service, folder_name: str) -> Optional[str]:
+        if not service or not folder_name:
             return None
         try:
             query = f"name = '{folder_name}' and mimeType = 'application/vnd.google-apps.folder' and trashed = false"
-            results = self.service.files().list(q=query, fields="files(id, name)").execute()
+            results = service.files().list(q=query, fields="files(id, name)").execute()
             files = results.get('files', [])
             if files:
                 return files[0]['id']
@@ -112,7 +124,7 @@ class GoogleDriveManager:
                 'name': folder_name,
                 'mimeType': 'application/vnd.google-apps.folder'
             }
-            folder = self.service.files().create(body=folder_metadata, fields='id').execute()
+            folder = service.files().create(body=folder_metadata, fields='id').execute()
             return folder.get('id')
         except Exception as e:
             print(f"[GoogleDrive] Error creating folder '{folder_name}': {e}")

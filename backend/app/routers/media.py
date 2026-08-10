@@ -7,8 +7,13 @@ from ..database import get_db
 from ..models import InventoryUnit, UnitMedia, ServiceManual
 from ..schemas import UnitMediaSchema, ServiceManualSchema
 from ..gdrive import gdrive_manager, LOCAL_UPLOADS_DIR
+from .auth import GoogleOAuthToken
 
 router = APIRouter(prefix="/api/v1", tags=["Media & Service Manuals"])
+
+def get_active_access_token(db: Session) -> Optional[str]:
+    token_record = db.query(GoogleOAuthToken).first()
+    return token_record.access_token if token_record else None
 
 @router.post("/inventory/{id}/media", response_model=UnitMediaSchema, status_code=201)
 async def upload_unit_media(
@@ -21,7 +26,8 @@ async def upload_unit_media(
     if not unit:
         raise HTTPException(status_code=404, detail="Inventory unit not found")
 
-    # Save uploaded file to temporary location for Google Drive / storage processing
+    access_token = get_active_access_token(db)
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
         shutil_content = await file.read()
         tmp.write(shutil_content)
@@ -33,7 +39,8 @@ async def upload_unit_media(
             file_path=tmp_path,
             file_name=file.filename,
             mime_type=file.content_type or "application/octet-stream",
-            folder_name=folder_name
+            folder_name=folder_name,
+            access_token=access_token
         )
 
         media = UnitMedia(
@@ -76,6 +83,8 @@ async def upload_service_manual(
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
+    access_token = get_active_access_token(db)
+
     with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
         content = await file.read()
         tmp.write(content)
@@ -87,7 +96,8 @@ async def upload_service_manual(
             file_path=tmp_path,
             file_name=file.filename,
             mime_type=file.content_type or "application/pdf",
-            folder_name=folder_name
+            folder_name=folder_name,
+            access_token=access_token
         )
 
         manual = ServiceManual(
