@@ -7,8 +7,14 @@ import {
   HardDrive, 
   Plus, 
   Save, 
-  Trash2
+  Trash2,
+  Folder,
+  Image as ImageIcon,
+  FileText,
+  UploadCloud,
+  ExternalLink
 } from 'lucide-react';
+import { uploadUnitMedia, deleteUnitMedia, searchServiceManuals, uploadServiceManual } from '../api/client';
 
 export default function UnitDetailModal({ 
   unit, 
@@ -48,12 +54,25 @@ export default function UnitDetailModal({
   const [shippingCosts, setShippingCosts] = useState('');
   const [listingUrl, setListingUrl] = useState('');
 
+  // Media & Manual states
+  const [mediaList, setMediaList] = useState(unit?.media_items || []);
+  const [uploading, setUploading] = useState(false);
+  const [fileToUpload, setFileToUpload] = useState(null);
+  const [uploadType, setUploadType] = useState('image');
+  
+  // Manuals state
+  const [foundManuals, setFoundManuals] = useState([]);
+  const [manualTitle, setManualTitle] = useState('');
+  const [manualFile, setManualFile] = useState(null);
+  const [manualUploading, setManualUploading] = useState(false);
+
   useEffect(() => {
     if (unit) {
       setStatus(unit.system_status);
       setBaseCost(unit.base_cost);
       setCosmeticCondition(unit.cosmetic_condition);
-      
+      setMediaList(unit.media_items || []);
+
       if (unit.repair_log) {
         setPriority(unit.repair_log.priority);
         setSymptoms(unit.repair_log.initial_symptoms || '');
@@ -69,6 +88,13 @@ export default function UnitDetailModal({
         setPlatformFees(listing.platform_fees || 0);
         setShippingCosts(listing.shipping_costs || 0);
         setListingUrl(listing.listing_url || '');
+      }
+
+      // Search matching manuals for this unit brand and model
+      if (unit.brand && unit.model_number) {
+        searchServiceManuals(unit.brand, unit.model_number).then((res) => {
+          setFoundManuals(res || []);
+        }).catch(() => {});
       }
     }
   }, [unit]);
@@ -135,6 +161,58 @@ export default function UnitDetailModal({
     }
   };
 
+  const handleUploadMedia = async (e) => {
+    e.preventDefault();
+    if (!fileToUpload) return;
+
+    try {
+      setUploading(true);
+      const formData = new FormData();
+      formData.append('file', fileToUpload);
+      formData.append('file_type', uploadType);
+
+      const newMedia = await uploadUnitMedia(unit.unit_id, formData);
+      setMediaList((prev) => [...prev, newMedia]);
+      setFileToUpload(null);
+    } catch (err) {
+      alert('Failed to upload media: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setUploading(false);
+    }
+  };
+
+  const handleDeleteMedia = async (mediaId) => {
+    try {
+      await deleteUnitMedia(mediaId);
+      setMediaList((prev) => prev.filter((m) => m.media_id !== mediaId));
+    } catch (err) {
+      console.error('Failed to delete media:', err);
+    }
+  };
+
+  const handleUploadManual = async (e) => {
+    e.preventDefault();
+    if (!manualFile || !manualTitle) return;
+
+    try {
+      setManualUploading(true);
+      const formData = new FormData();
+      formData.append('brand', unit.brand);
+      formData.append('model_number', unit.model_number);
+      formData.append('title', manualTitle);
+      formData.append('file', manualFile);
+
+      const newManual = await uploadServiceManual(formData);
+      setFoundManuals((prev) => [...prev, newManual]);
+      setManualTitle('');
+      setManualFile(null);
+    } catch (err) {
+      alert('Failed to upload service manual: ' + (err.response?.data?.detail || err.message));
+    } finally {
+      setManualUploading(false);
+    }
+  };
+
   return (
     <div className="fixed inset-0 z-50 bg-slate-900/60 backdrop-blur-sm flex items-center justify-center p-3 sm:p-4 overflow-y-auto">
       <div className="bg-white border border-slate-200 rounded-2xl w-full max-w-4xl max-h-[90vh] flex flex-col modal-shadow overflow-hidden">
@@ -161,12 +239,13 @@ export default function UnitDetailModal({
           </button>
         </div>
 
-        {/* Tabs Bar - Scrollable on narrow viewports */}
+        {/* Tabs Bar */}
         <div className="flex border-b border-slate-200 bg-slate-50/50 px-4 sm:px-6 gap-1 pt-2 overflow-x-auto">
           {[
             { id: 'hardware', label: 'Hardware Details', icon: HardDrive },
             { id: 'repair', label: 'Repair Log & Workbench', icon: Wrench },
             { id: 'parts', label: `Parts Consumed (${parts.length})`, icon: Package },
+            { id: 'media', label: `Media & Drive (${mediaList.length})`, icon: Folder },
             { id: 'financials', label: 'Financials & Exit', icon: TrendingUp },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -425,7 +504,180 @@ export default function UnitDetailModal({
             </div>
           )}
 
-          {/* TAB 4: Financials & Exit Strategy */}
+          {/* TAB 4: Media & Google Drive */}
+          {activeTab === 'media' && (
+            <div className="space-y-6">
+              
+              {/* Media Attachments Gallery */}
+              <div>
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3">Unit Media & Scope Photos</h4>
+                
+                {mediaList.length === 0 ? (
+                  <div className="p-8 text-center border border-dashed border-slate-200 rounded-xl bg-slate-50 text-slate-500 text-xs">
+                    <ImageIcon className="w-8 h-8 text-slate-400 mx-auto mb-2" />
+                    <p className="font-semibold text-slate-700">No media attached for this unit yet.</p>
+                    <p className="text-[11px] text-slate-500 mt-0.5">Upload photos of cosmetic state, component solder work, or video clips below.</p>
+                  </div>
+                ) : (
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                    {mediaList.map((m) => (
+                      <div key={m.media_id} className="relative group bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-2xs p-2">
+                        {m.file_type === 'image' || m.web_view_link?.match(/\.(jpeg|jpg|png|gif|webp)/i) ? (
+                          <img 
+                            src={m.web_view_link} 
+                            alt={m.file_name} 
+                            className="w-full h-32 object-cover rounded-lg bg-slate-100" 
+                          />
+                        ) : (
+                          <div className="w-full h-32 flex flex-col items-center justify-center bg-slate-100 rounded-lg text-slate-600 p-2 text-center">
+                            <FileText className="w-8 h-8 text-amber-600 mb-1" />
+                            <span className="text-[11px] font-semibold truncate max-w-full">{m.file_name}</span>
+                          </div>
+                        )}
+
+                        <div className="mt-2 flex items-center justify-between text-[11px]">
+                          <span className="truncate max-w-[120px] font-medium text-slate-800">{m.file_name}</span>
+                          <div className="flex items-center space-x-1">
+                            {m.web_view_link && (
+                              <a
+                                href={m.web_view_link}
+                                target="_blank"
+                                rel="noreferrer"
+                                className="p-1 rounded bg-white border border-slate-200 text-amber-700 hover:bg-amber-50"
+                              >
+                                <ExternalLink className="w-3.5 h-3.5" />
+                              </a>
+                            )}
+                            <button
+                              onClick={() => handleDeleteMedia(m.media_id)}
+                              className="p-1 rounded bg-white border border-slate-200 text-rose-600 hover:bg-rose-50"
+                            >
+                              <Trash2 className="w-3.5 h-3.5" />
+                            </button>
+                          </div>
+                        </div>
+
+                        {m.gdrive_file_id && (
+                          <span className="absolute top-3 left-3 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                            GDRIVE
+                          </span>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              {/* Upload Media Form */}
+              <form onSubmit={handleUploadMedia} className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center space-x-2">
+                  <UploadCloud className="w-4 h-4 text-amber-600" />
+                  <span>Upload Unit Attachment / Photo</span>
+                </h4>
+                
+                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                  <select
+                    value={uploadType}
+                    onChange={(e) => setUploadType(e.target.value)}
+                    className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                  >
+                    <option value="image">Photo / Chassis Image</option>
+                    <option value="video">Repair Video Clip</option>
+                    <option value="schematic">Schematic / Waveform</option>
+                    <option value="manual">Manual PDF</option>
+                  </select>
+
+                  <input
+                    type="file"
+                    required
+                    onChange={(e) => setFileToUpload(e.target.files[0])}
+                    className="sm:col-span-2 bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none"
+                  />
+                </div>
+
+                <div className="flex justify-end">
+                  <button
+                    type="submit"
+                    disabled={uploading || !fileToUpload}
+                    className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold text-xs transition-colors shadow-xs"
+                  >
+                    <UploadCloud className="w-4 h-4" />
+                    <span>{uploading ? 'Uploading to Drive...' : 'Upload Attachment'}</span>
+                  </button>
+                </div>
+              </form>
+
+              {/* Service Manuals Vault */}
+              <div className="pt-4 border-t border-slate-200 space-y-3">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center space-x-2">
+                  <FileText className="w-4 h-4 text-amber-600" />
+                  <span>Service Manuals & Schematics Vault ({unit.brand} {unit.model_number})</span>
+                </h4>
+
+                {foundManuals.length === 0 ? (
+                  <p className="text-xs text-slate-500 italic bg-slate-50 p-3 rounded-lg border border-slate-200">
+                    No service manual uploaded yet for {unit.brand} {unit.model_number}. You can upload a PDF service manual below.
+                  </p>
+                ) : (
+                  <div className="space-y-2">
+                    {foundManuals.map((man) => (
+                      <div key={man.manual_id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
+                        <div className="flex items-center space-x-2">
+                          <FileText className="w-4 h-4 text-amber-600 shrink-0" />
+                          <span className="font-bold text-slate-900">{man.title}</span>
+                        </div>
+                        {man.web_view_link && (
+                          <a
+                            href={man.web_view_link}
+                            target="_blank"
+                            rel="noreferrer"
+                            className="flex items-center space-x-1 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] transition-colors"
+                          >
+                            <span>Open PDF</span>
+                            <ExternalLink className="w-3 h-3" />
+                          </a>
+                        )}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {/* Upload Manual Form */}
+                <form onSubmit={handleUploadManual} className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
+                  <span className="font-bold text-slate-700 block">Add PDF Service Manual for {unit.brand} {unit.model_number}</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                    <input
+                      type="text"
+                      required
+                      placeholder="Title (e.g. Pioneer PD-6030 Service Manual)"
+                      value={manualTitle}
+                      onChange={(e) => setManualTitle(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                    />
+                    <input
+                      type="file"
+                      required
+                      accept=".pdf"
+                      onChange={(e) => setManualFile(e.target.files[0])}
+                      className="bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none"
+                    />
+                  </div>
+                  <div className="flex justify-end">
+                    <button
+                      type="submit"
+                      disabled={manualUploading || !manualFile}
+                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-semibold text-xs transition-colors"
+                    >
+                      {manualUploading ? 'Uploading PDF...' : 'Save Service Manual'}
+                    </button>
+                  </div>
+                </form>
+              </div>
+
+            </div>
+          )}
+
+          {/* TAB 5: Financials & Exit Strategy */}
           {activeTab === 'financials' && (
             <div className="space-y-5">
               

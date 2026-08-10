@@ -72,3 +72,33 @@ export const getNetProfit = async (id) => {
   const res = await api.get(`/finance/profit/${id}`);
   return res.data;
 };
+
+export const uploadUnitMedia = async (id, formData) => {
+  const res = await api.post(`/inventory/${id}/media`, formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+};
+
+export const getUnitMedia = async (id) => {
+  const res = await api.get(`/inventory/${id}/media`);
+  return res.data;
+};
+
+export const deleteUnitMedia = async (mediaId) => {
+  await api.delete(`/media/${mediaId}`);
+};
+
+export const uploadServiceManual = async (formData) => {
+  const res = await api.post('/manuals/upload', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+};
+
+export const searchServiceManuals = async (brand, modelNumber) => {
+  const res = await api.get('/manuals/search', {
+    params: { brand, model_number: modelNumber }
+  });
+  return res.data;
+};

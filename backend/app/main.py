@@ -5,7 +5,8 @@ from fastapi.responses import FileResponse
 import os
 from .database import engine, Base
 from .seed import seed_database
-from .routers import inventory, repair, parts, sales, dashboard
+from .gdrive import LOCAL_UPLOADS_DIR
+from .routers import inventory, repair, parts, sales, dashboard, media
 
 # Initialize tables
 Base.metadata.create_all(bind=engine)
@@ -28,12 +29,17 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# Mount local uploads directory if needed
+os.makedirs(LOCAL_UPLOADS_DIR, exist_ok=True)
+app.mount("/uploads", StaticFiles(directory=LOCAL_UPLOADS_DIR), name="uploads")
+
 # Include API Routers
 app.include_router(inventory.router)
 app.include_router(repair.router)
 app.include_router(parts.router)
 app.include_router(sales.router)
 app.include_router(dashboard.router)
+app.include_router(media.router)
 
 @app.get("/api/v1/health")
 def health_check():
@@ -48,7 +54,7 @@ if os.path.exists(frontend_dist):
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        if full_path.startswith("api"):
+        if full_path.startswith("api") or full_path.startswith("uploads"):
             return None
         file_path = os.path.join(frontend_dist, full_path)
         if os.path.exists(file_path) and os.path.isfile(file_path):

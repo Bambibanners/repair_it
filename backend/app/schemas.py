@@ -2,6 +2,30 @@ from pydantic import BaseModel, ConfigDict
 from typing import Optional, List
 from datetime import datetime, date
 
+# Media & Manual Schemas
+class UnitMediaSchema(BaseModel):
+    media_id: str
+    unit_id: str
+    file_name: str
+    file_type: str
+    gdrive_file_id: Optional[str] = None
+    web_view_link: Optional[str] = None
+    thumbnail_link: Optional[str] = None
+    uploaded_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+class ServiceManualSchema(BaseModel):
+    manual_id: str
+    brand: str
+    model_number: str
+    title: str
+    gdrive_file_id: Optional[str] = None
+    web_view_link: Optional[str] = None
+    uploaded_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
 # Part Order Schemas
 class PartOrderBase(BaseModel):
     description: str
@@ -126,6 +150,7 @@ class InventoryUnitDetail(InventoryUnitBase):
     repair_log: Optional[RepairLogSchema] = None
     part_orders: List[PartOrderSchema] = []
     sales_listings: List[SalesListingSchema] = []
+    media_items: List[UnitMediaSchema] = []
     financial_summary: Optional[NetProfitBreakdown] = None
 
     model_config = ConfigDict(from_attributes=True)

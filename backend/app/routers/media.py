@@ -1,0 +1,119 @@
+import os
+import tempfile
+from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
+from sqlalchemy.orm import Session
+from typing import List, Optional
+from ..database import get_db
+from ..models import InventoryUnit, UnitMedia, ServiceManual
+from ..schemas import UnitMediaSchema, ServiceManualSchema
+from ..gdrive import gdrive_manager, LOCAL_UPLOADS_DIR
+
+router = APIRouter(prefix="/api/v1", tags=["Media & Service Manuals"])
+
+@router.post("/inventory/{id}/media", response_model=UnitMediaSchema, status_code=201)
+async def upload_unit_media(
+    id: str,
+    file: UploadFile = File(...),
+    file_type: str = Form("image"), # image, video, manual, schematic
+    db: Session = Depends(get_db)
+):
+    unit = db.query(InventoryUnit).filter(InventoryUnit.unit_id == id).first()
+    if not unit:
+        raise HTTPException(status_code=404, detail="Inventory unit not found")
+
+    # Save uploaded file to temporary location for Google Drive / storage processing
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+        shutil_content = await file.read()
+        tmp.write(shutil_content)
+        tmp_path = tmp.name
+
+    try:
+        folder_name = f"Repair-It/{unit.brand}_{unit.model_number}_{unit.serial_number}"
+        gdrive_res = gdrive_manager.upload_file(
+            file_path=tmp_path,
+            file_name=file.filename,
+            mime_type=file.content_type or "application/octet-stream",
+            folder_name=folder_name
+        )
+
+        media = UnitMedia(
+            unit_id=id,
+            file_name=file.filename,
+            file_type=file_type,
+            gdrive_file_id=gdrive_res.get("gdrive_file_id"),
+            web_view_link=gdrive_res.get("web_view_link"),
+            thumbnail_link=gdrive_res.get("thumbnail_link")
+        )
+        db.add(media)
+        db.commit()
+        db.refresh(media)
+        return media
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+@router.get("/inventory/{id}/media", response_model=List[UnitMediaSchema])
+def get_unit_media_list(id: str, db: Session = Depends(get_db)):
+    unit = db.query(InventoryUnit).filter(InventoryUnit.unit_id == id).first()
+    if not unit:
+        raise HTTPException(status_code=404, detail="Inventory unit not found")
+    return unit.media_items
+
+@router.delete("/media/{media_id}", status_code=204)
+def delete_unit_media(media_id: str, db: Session = Depends(get_db)):
+    media = db.query(UnitMedia).filter(UnitMedia.media_id == media_id).first()
+    if not media:
+        raise HTTPException(status_code=404, detail="Media item not found")
+    db.delete(media)
+    db.commit()
+    return None
+
+@router.post("/manuals/upload", response_model=ServiceManualSchema, status_code=201)
+async def upload_service_manual(
+    brand: str = Form(...),
+    model_number: str = Form(...),
+    title: str = Form(...),
+    file: UploadFile = File(...),
+    db: Session = Depends(get_db)
+):
+    with tempfile.NamedTemporaryFile(delete=False, suffix=os.path.splitext(file.filename)[1]) as tmp:
+        content = await file.read()
+        tmp.write(content)
+        tmp_path = tmp.name
+
+    try:
+        folder_name = f"Repair-It/Manuals/{brand}"
+        gdrive_res = gdrive_manager.upload_file(
+            file_path=tmp_path,
+            file_name=file.filename,
+            mime_type=file.content_type or "application/pdf",
+            folder_name=folder_name
+        )
+
+        manual = ServiceManual(
+            brand=brand,
+            model_number=model_number,
+            title=title,
+            gdrive_file_id=gdrive_res.get("gdrive_file_id"),
+            web_view_link=gdrive_res.get("web_view_link")
+        )
+        db.add(manual)
+        db.commit()
+        db.refresh(manual)
+        return manual
+    finally:
+        if os.path.exists(tmp_path):
+            os.remove(tmp_path)
+
+@router.get("/manuals/search", response_model=List[ServiceManualSchema])
+def search_service_manuals(
+    brand: Optional[str] = Query(None),
+    model_number: Optional[str] = Query(None),
+    db: Session = Depends(get_db)
+):
+    query = db.query(ServiceManual)
+    if brand:
+        query = query.filter(ServiceManual.brand.ilike(f"%{brand}%"))
+    if model_number:
+        query = query.filter(ServiceManual.model_number.ilike(f"%{model_number}%"))
+    return query.all()

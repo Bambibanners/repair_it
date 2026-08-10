@@ -25,6 +25,7 @@ class InventoryUnit(Base):
     repair_log = relationship("RepairLog", back_populates="unit", uselist=False, cascade="all, delete-orphan")
     part_orders = relationship("PartOrder", back_populates="unit", cascade="all, delete-orphan")
     sales_listings = relationship("SalesListing", back_populates="unit", cascade="all, delete-orphan")
+    media_items = relationship("UnitMedia", back_populates="unit", cascade="all, delete-orphan")
 
 class RepairLog(Base):
     __tablename__ = "repair_logs"
@@ -66,3 +67,28 @@ class SalesListing(Base):
     is_active = Column(Boolean, default=True)
 
     unit = relationship("InventoryUnit", back_populates="sales_listings")
+
+class UnitMedia(Base):
+    __tablename__ = "unit_media"
+
+    media_id = Column(String(36), primary_key=True, default=generate_uuid)
+    unit_id = Column(String(36), ForeignKey("inventory_units.unit_id"), nullable=False)
+    file_name = Column(String(255), nullable=False)
+    file_type = Column(String(50), nullable=False, default="image") # image, video, manual, schematic
+    gdrive_file_id = Column(String(100), nullable=True)
+    web_view_link = Column(String(500), nullable=True)
+    thumbnail_link = Column(String(500), nullable=True)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    unit = relationship("InventoryUnit", back_populates="media_items")
+
+class ServiceManual(Base):
+    __tablename__ = "service_manuals"
+
+    manual_id = Column(String(36), primary_key=True, default=generate_uuid)
+    brand = Column(String(100), nullable=False, index=True)
+    model_number = Column(String(100), nullable=False, index=True)
+    title = Column(String(255), nullable=False)
+    gdrive_file_id = Column(String(100), nullable=True)
+    web_view_link = Column(String(500), nullable=True)
+    uploaded_at = Column(DateTime, default=datetime.utcnow)
