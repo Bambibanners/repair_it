@@ -30,9 +30,9 @@ cd ..
 echo "[4/4] Generating systemd unit & configuring firewall rules..."
 chmod +x start.sh || true
 
-CURRENT_USER=$(whoami)
-CURRENT_DIR=$(pwd)
-CURRENT_PATH="$PATH"
+REAL_USER="${SUDO_USER:-$(whoami)}"
+REAL_DIR="$(pwd)"
+REAL_PATH="$PATH"
 
 cat <<EOF > repair-it.service
 [Unit]
@@ -41,19 +41,19 @@ After=network.target network-online.target
 
 [Service]
 Type=simple
-User=${CURRENT_USER}
-WorkingDirectory=${CURRENT_DIR}
-ExecStart=${CURRENT_DIR}/start.sh
+User=${REAL_USER}
+WorkingDirectory=${REAL_DIR}
+ExecStart=${REAL_DIR}/start.sh
 Restart=always
 RestartSec=5
-Environment=PATH=${CURRENT_PATH}
+Environment=PATH=${REAL_PATH}
 
 [Install]
 WantedBy=multi-user.target
 EOF
 
 if command -v ufw >/dev/null 2>&1; then
-    if sudo ufw status | grep -q "Status: active"; then
+    if sudo ufw status 2>/dev/null | grep -q "Status: active"; then
         echo "UFW is active. Allowing port 10930 (Web App) and 8000 (Backend API)..."
         sudo ufw allow 10930/tcp comment 'Repair-It Web Application' || true
         sudo ufw allow 8000/tcp comment 'Repair-It Backend API' || true
@@ -63,13 +63,14 @@ fi
 echo "================================================================="
 echo "  SETUP COMPLETED SUCCESSFULLY!                                 "
 echo "                                                                 "
-echo "  To start Repair-It manually, run:                             "
+echo "  Systemd service configured for user: ${REAL_USER}             "
+echo "  Working directory: ${REAL_DIR}                                "
+echo "                                                                 "
+echo "  To start Repair-It manually:                                  "
 echo "    ./start.sh                                                   "
 echo "                                                                 "
-echo "  To install as a 24/7 background system service, run:          "
+echo "  To install & start as 24/7 system service:                    "
 echo "    sudo cp repair-it.service /etc/systemd/system/               "
 echo "    sudo systemctl daemon-reload                                 "
 echo "    sudo systemctl enable --now repair-it                        "
-echo "                                                                 "
-echo "  Access Web Interface at: http://<raspberry-pi-ip>:10930        "
 echo "================================================================="
