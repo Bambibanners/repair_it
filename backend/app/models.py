@@ -1,0 +1,68 @@
+import uuid
+from datetime import datetime
+from sqlalchemy import Column, String, Float, Integer, Text, Boolean, DateTime, Date, ForeignKey
+from sqlalchemy.orm import relationship
+from .database import Base
+
+def generate_uuid():
+    return str(uuid.uuid4())
+
+class InventoryUnit(Base):
+    __tablename__ = "inventory_units"
+
+    unit_id = Column(String(36), primary_key=True, default=generate_uuid)
+    brand = Column(String(100), nullable=False)
+    model_number = Column(String(100), nullable=False)
+    serial_number = Column(String(100), nullable=False, unique=True, index=True)
+    category = Column(String(50), nullable=False) # e.g. CD Player, Turntable, Amplifier, Tape Deck, Receiver
+    acquisition_source = Column(String(100), nullable=True) # e.g. eBay, Car Boot, Flea Market
+    base_cost = Column(Float, nullable=False, default=0.0) # GBP purchase price
+    cosmetic_condition = Column(String(50), nullable=False, default="Good") # Mint, Good, Fair, Poor, For Parts
+    system_status = Column(String(50), nullable=False, default="Triage") # Triage, On Bench, Waiting Parts, Ready to Sell, Sold, Scrapped
+    created_at = Column(DateTime, default=datetime.utcnow)
+
+    # Relationships
+    repair_log = relationship("RepairLog", back_populates="unit", uselist=False, cascade="all, delete-orphan")
+    part_orders = relationship("PartOrder", back_populates="unit", cascade="all, delete-orphan")
+    sales_listings = relationship("SalesListing", back_populates="unit", cascade="all, delete-orphan")
+
+class RepairLog(Base):
+    __tablename__ = "repair_logs"
+
+    log_id = Column(String(36), primary_key=True, default=generate_uuid)
+    unit_id = Column(String(36), ForeignKey("inventory_units.unit_id"), nullable=False)
+    priority = Column(Integer, default=2) # 1 (High), 2 (Med), 3 (Low)
+    initial_symptoms = Column(Text, nullable=True)
+    action_plan = Column(Text, nullable=True)
+    bench_notes = Column(Text, nullable=True)
+    updated_at = Column(DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+
+    unit = relationship("InventoryUnit", back_populates="repair_log")
+
+class PartOrder(Base):
+    __tablename__ = "part_orders"
+
+    part_id = Column(String(36), primary_key=True, default=generate_uuid)
+    unit_id = Column(String(36), ForeignKey("inventory_units.unit_id"), nullable=False)
+    description = Column(String(255), nullable=False)
+    supplier = Column(String(100), nullable=True)
+    cost = Column(Float, nullable=False, default=0.0)
+    order_status = Column(String(50), nullable=False, default="To Order") # To Order, Ordered, Shipped, Received, Installed
+    eta_date = Column(Date, nullable=True)
+
+    unit = relationship("InventoryUnit", back_populates="part_orders")
+
+class SalesListing(Base):
+    __tablename__ = "sales_listings"
+
+    listing_id = Column(String(36), primary_key=True, default=generate_uuid)
+    unit_id = Column(String(36), ForeignKey("inventory_units.unit_id"), nullable=False)
+    platform = Column(String(50), nullable=False) # e.g. eBay, Reverb, Facebook Marketplace
+    target_price = Column(Float, nullable=True)
+    listing_url = Column(String(255), nullable=True)
+    final_sale_price = Column(Float, nullable=True)
+    platform_fees = Column(Float, default=0.0)
+    shipping_costs = Column(Float, default=0.0)
+    is_active = Column(Boolean, default=True)
+
+    unit = relationship("InventoryUnit", back_populates="sales_listings")

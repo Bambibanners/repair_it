@@ -1,0 +1,14 @@
+{
+  "name": "repair-it",
+  "version": "1.0.0",
+  "description": "Bespoke Inventory & Repair Tracking System for Vintage Electronics (Repair-It)",
+  "scripts": {
+    "backend": "cd backend && python3 -m uvicorn app.main:app --reload --port 8000",
+    "frontend": "cd frontend && npm run dev",
+    "dev": "concurrently \"npm run backend\" \"npm run frontend\"",
+    "build": "cd frontend && npm run build"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
+  }
+}
