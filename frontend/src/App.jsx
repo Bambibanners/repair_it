@@ -160,7 +160,7 @@ export default function App() {
   };
 
   return (
-    <div className="min-h-screen bg-[#0b0f19] text-slate-100 font-sans selection:bg-amber-500 selection:text-slate-950">
+    <div className="min-h-screen bg-slate-50 text-slate-900 font-sans selection:bg-amber-500 selection:text-white">
       
       {/* Header & Navigation */}
       <Navbar 
@@ -175,8 +175,8 @@ export default function App() {
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-6">
         {loading && !stats ? (
           <div className="flex flex-col items-center justify-center py-24 space-y-3">
-            <div className="w-8 h-8 border-2 border-amber-400 border-t-transparent rounded-full animate-spin"></div>
-            <p className="text-sm font-mono text-slate-400">Connecting to Repair-It local engine...</p>
+            <div className="w-8 h-8 border-2 border-amber-500 border-t-transparent rounded-full animate-spin"></div>
+            <p className="text-sm font-mono text-slate-600">Connecting to Repair-It local engine...</p>
           </div>
         ) : (
           <>
