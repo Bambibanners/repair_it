@@ -22,6 +22,23 @@ Once running, access the web app at:
 
 ---
 
+## Updating the Application
+
+To update **Repair-It** to the latest version anytime:
+
+```bash
+cd repair_it
+./update.sh
+```
+
+`./update.sh` will automatically:
+1. Pull the latest commits from GitHub.
+2. Update backend Python & frontend Node dependencies.
+3. Rebuild the frontend production assets.
+4. Automatically restart the background systemd service if running!
+
+---
+
 ### Firewall Configuration (UFW)
 
 If UFW (Uncomplicated Firewall) is active on your Ubuntu / Raspberry Pi server, open port `10930` (Web Interface) and port `8000` (Backend API):
