@@ -103,6 +103,15 @@ export const searchServiceManuals = async (brand, modelNumber) => {
   return res.data;
 };
 
+export const uploadServiceAccountJson = async (file) => {
+  const formData = new FormData();
+  formData.append('file', file);
+  const res = await api.post('/auth/google/service-account', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  });
+  return res.data;
+};
+
 export const saveGoogleOAuthToken = async (payload) => {
   const res = await api.post('/auth/google', payload);
   return res.data;

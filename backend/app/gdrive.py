@@ -18,6 +18,13 @@ LOCAL_UPLOADS_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), "../
 os.makedirs(LOCAL_UPLOADS_DIR, exist_ok=True)
 
 class GoogleDriveManager:
+    def reload_credentials(self):
+        """Triggers credentials check log"""
+        if os.path.exists(CREDENTIALS_FILE):
+            print(f"[GoogleDrive] Reloaded Service Account credentials from {CREDENTIALS_FILE}")
+        else:
+            print(f"[GoogleDrive] Service Account credentials file {CREDENTIALS_FILE} removed or missing.")
+
     def get_service_for_token(self, access_token: Optional[str] = None):
         """
         Builds a Google Drive service object using a User OAuth Token if provided,
@@ -26,15 +33,7 @@ class GoogleDriveManager:
         if not GDRIVE_AVAILABLE:
             return None
 
-        # 1. Try User OAuth Token
-        if access_token:
-            try:
-                creds = UserCredentials(token=access_token)
-                return build('drive', 'v3', credentials=creds)
-            except Exception as e:
-                print(f"[GoogleDrive] Error building service from OAuth token: {e}")
-
-        # 2. Try Service Account JSON
+        # 1. Try Service Account JSON (permanent)
         if os.path.exists(CREDENTIALS_FILE):
             try:
                 scopes = ['https://www.googleapis.com/auth/drive.file']
@@ -44,6 +43,14 @@ class GoogleDriveManager:
                 return build('drive', 'v3', credentials=creds)
             except Exception as e:
                 print(f"[GoogleDrive] Error building service from service account: {e}")
+
+        # 2. Try User OAuth Token
+        if access_token:
+            try:
+                creds = UserCredentials(token=access_token)
+                return build('drive', 'v3', credentials=creds)
+            except Exception as e:
+                print(f"[GoogleDrive] Error building service from OAuth token: {e}")
 
         return None
 
