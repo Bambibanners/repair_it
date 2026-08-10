@@ -20,7 +20,7 @@ export default function MarketResearchModal({ isOpen, onClose, onConvertToIntake
   const [brand, setBrand] = useState('Pioneer');
   const [modelNumber, setModelNumber] = useState('PD-6030');
   const [category, setCategory] = useState('CD Player');
-  const [sellerPrice, setSellerPrice] = useState(30);
+  const [sellerPrice, setSellerPrice] = useState(25);
 
   const [valuationData, setValuationData] = useState(null);
   const [loading, setLoading] = useState(false);
@@ -72,10 +72,10 @@ export default function MarketResearchModal({ isOpen, onClose, onConvertToIntake
               <div className="flex items-center space-x-2">
                 <h2 className="text-base font-bold text-slate-900 font-mono">QUICK LOOK: UK eBAY MARKET VALUATION</h2>
                 <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-amber-100 text-amber-900 border border-amber-300">
-                  12-Month UK Trends
+                  Real UK Sold Averages
                 </span>
               </div>
-              <p className="text-xs text-slate-500">Research gear values, condition breakdowns & flip profitability before buying!</p>
+              <p className="text-xs text-slate-500">Research realistic UK eBay sold prices across standard eBay equipment conditions!</p>
             </div>
           </div>
 
@@ -139,7 +139,7 @@ export default function MarketResearchModal({ isOpen, onClose, onConvertToIntake
                 <input
                   type="number"
                   step="0.01"
-                  placeholder="e.g. 30"
+                  placeholder="e.g. 25"
                   value={sellerPrice}
                   onChange={(e) => setSellerPrice(e.target.value)}
                   className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs font-mono font-bold text-amber-700 focus:outline-none focus:border-amber-500"
@@ -153,7 +153,7 @@ export default function MarketResearchModal({ isOpen, onClose, onConvertToIntake
                 className="flex items-center space-x-1.5 px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-xs shadow-xs transition-colors"
               >
                 <Search className="w-3.5 h-3.5" />
-                <span>Calculate Market Valuation</span>
+                <span>Calculate Realistic Valuation</span>
               </button>
             </div>
           </form>
@@ -162,7 +162,7 @@ export default function MarketResearchModal({ isOpen, onClose, onConvertToIntake
           {loading && (
             <div className="py-12 text-center font-mono text-xs text-slate-500 space-y-2">
               <div className="w-6 h-6 border-2 border-amber-500 border-t-transparent rounded-full animate-spin mx-auto"></div>
-              <p>Fetching 12-Month UK eBay historic sales data...</p>
+              <p>Fetching 12-Month UK eBay sold sales data...</p>
             </div>
           )}
 
@@ -180,7 +180,7 @@ export default function MarketResearchModal({ isOpen, onClose, onConvertToIntake
                     </span>
                   </div>
                   <p className="text-xs text-slate-400 mt-0.5">
-                    12-Mo Sales Volume: <span className="text-slate-200 font-bold">{valuationData.twelve_month_trend.sample_volume} units sold</span>
+                    12-Mo Sales Volume: <span className="text-slate-200 font-bold">{valuationData.twelve_month_trend.sample_volume} UK completed listings</span>
                   </p>
                 </div>
 
@@ -198,7 +198,7 @@ export default function MarketResearchModal({ isOpen, onClose, onConvertToIntake
                     rel="noreferrer"
                     className="flex items-center space-x-1 px-3 py-1.5 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs transition-colors shrink-0"
                   >
-                    <span>View Completed on eBay</span>
+                    <span>Verify Live on eBay UK</span>
                     <ExternalLink className="w-3.5 h-3.5" />
                   </a>
                 </div>
@@ -206,47 +206,47 @@ export default function MarketResearchModal({ isOpen, onClose, onConvertToIntake
 
               {/* Condition Breakdown Matrix */}
               <div>
-                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3 font-mono">UK eBay Sold Price Breakdown by Condition</h4>
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide mb-3 font-mono">UK eBay Sold Price Breakdown by Actual eBay Conditions</h4>
                 
                 <div className="grid grid-cols-1 sm:grid-cols-4 gap-3">
                   
-                  {/* 1. For Parts / Faulty */}
+                  {/* 1. For parts or not working */}
                   <div className="p-3.5 rounded-xl bg-rose-50/50 border border-rose-200 space-y-1.5">
-                    <span className="text-[10px] font-bold text-rose-800 block uppercase tracking-wider">🛠️ FOR PARTS / FAULTY</span>
+                    <span className="text-[10px] font-bold text-rose-800 block uppercase tracking-wider">🛠️ {valuationData.condition_breakdown.parts_faulty.label}</span>
                     <div className="text-xl font-bold font-mono text-rose-900">
                       £{valuationData.condition_breakdown.parts_faulty.avg_price.toFixed(2)}
                     </div>
-                    <p className="text-[10px] text-slate-500 leading-tight">Faulty, channel out, optical laser dead or cosmetic damage.</p>
+                    <p className="text-[10px] text-slate-500 leading-tight">{valuationData.condition_breakdown.parts_faulty.description}</p>
                   </div>
 
-                  {/* 2. Used / As-Is */}
+                  {/* 2. Used */}
                   <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-1.5">
-                    <span className="text-[10px] font-bold text-slate-700 block uppercase tracking-wider">📻 USED / UNTESTED</span>
+                    <span className="text-[10px] font-bold text-slate-700 block uppercase tracking-wider">📻 {valuationData.condition_breakdown.used_asis.label}</span>
                     <div className="text-xl font-bold font-mono text-slate-900">
                       £{valuationData.condition_breakdown.used_asis.avg_price.toFixed(2)}
                     </div>
-                    <p className="text-[10px] text-slate-500 leading-tight">Powers on, unserviced, minor crackle or cosmetic wear.</p>
+                    <p className="text-[10px] text-slate-500 leading-tight">{valuationData.condition_breakdown.used_asis.description}</p>
                   </div>
 
-                  {/* 3. Serviced / Refurbished */}
+                  {/* 3. Seller refurbished */}
                   <div className="p-3.5 rounded-xl bg-amber-50 border border-amber-300 space-y-1.5 shadow-2xs">
                     <div className="flex items-center justify-between">
-                      <span className="text-[10px] font-bold text-amber-900 block uppercase tracking-wider">✨ SERVICED / REFURB</span>
-                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-200 text-amber-900">YOUR TARGET</span>
+                      <span className="text-[10px] font-bold text-amber-900 block uppercase tracking-wider">✨ {valuationData.condition_breakdown.serviced_refurbished.label}</span>
+                      <span className="text-[9px] font-bold px-1.5 py-0.2 rounded bg-amber-200 text-amber-900">WORKSHOP TARGET</span>
                     </div>
                     <div className="text-xl font-bold font-mono text-amber-900">
                       £{valuationData.condition_breakdown.serviced_refurbished.avg_price.toFixed(2)}
                     </div>
-                    <p className="text-[10px] text-amber-800/80 leading-tight">Bench aligned, DeoxIT flushed, capstan belts replaced.</p>
+                    <p className="text-[10px] text-amber-800/80 leading-tight">{valuationData.condition_breakdown.serviced_refurbished.description}</p>
                   </div>
 
-                  {/* 4. Mint / Boxed */}
+                  {/* 4. Like New / New (other) */}
                   <div className="p-3.5 rounded-xl bg-emerald-50/60 border border-emerald-200 space-y-1.5">
-                    <span className="text-[10px] font-bold text-emerald-800 block uppercase tracking-wider">🏆 MINT / BOXED</span>
+                    <span className="text-[10px] font-bold text-emerald-800 block uppercase tracking-wider">🏆 {valuationData.condition_breakdown.mint_boxed.label}</span>
                     <div className="text-xl font-bold font-mono text-emerald-900">
                       £{valuationData.condition_breakdown.mint_boxed.avg_price.toFixed(2)}
                     </div>
-                    <p className="text-[10px] text-slate-500 leading-tight">Collector grade with original box, manual & packaging.</p>
+                    <p className="text-[10px] text-slate-500 leading-tight">{valuationData.condition_breakdown.mint_boxed.description}</p>
                   </div>
 
                 </div>
