@@ -8,7 +8,8 @@ import {
   PlusCircle,
   Search,
   HardDrive,
-  Cpu
+  Cpu,
+  BookOpen
 } from 'lucide-react';
 
 export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAuth, search, setSearch }) {
@@ -17,6 +18,7 @@ export default function Navbar({ activeTab, setActiveTab, onOpenIntake, onOpenAu
     { id: 'inventory', label: 'Inventory Grid', icon: Table },
     { id: 'kanban', label: 'Workbench Kanban', icon: Kanban },
     { id: 'master_parts', label: 'Parts & Compatibility', icon: Cpu },
+    { id: 'manuals_library', label: 'Manuals Vault', icon: BookOpen },
     { id: 'sales', label: 'Sales & Financials', icon: TrendingUp },
   ];
 
