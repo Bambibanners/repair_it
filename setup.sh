@@ -26,9 +26,31 @@ npm install
 npm run build
 cd ..
 
-# 4. Check & configure UFW firewall if enabled
-echo "[4/4] Finalizing configuration & checking firewall rules..."
+# 4. Generate systemd service & configure UFW firewall
+echo "[4/4] Generating systemd unit & configuring firewall rules..."
 chmod +x start.sh || true
+
+CURRENT_USER=$(whoami)
+CURRENT_DIR=$(pwd)
+CURRENT_PATH="$PATH"
+
+cat <<EOF > repair-it.service
+[Unit]
+Description=Repair-It Vintage Electronics Lifecycle Platform
+After=network.target network-online.target
+
+[Service]
+Type=simple
+User=${CURRENT_USER}
+WorkingDirectory=${CURRENT_DIR}
+ExecStart=${CURRENT_DIR}/start.sh
+Restart=always
+RestartSec=5
+Environment=PATH=${CURRENT_PATH}
+
+[Install]
+WantedBy=multi-user.target
+EOF
 
 if command -v ufw >/dev/null 2>&1; then
     if sudo ufw status | grep -q "Status: active"; then
@@ -41,8 +63,13 @@ fi
 echo "================================================================="
 echo "  SETUP COMPLETED SUCCESSFULLY!                                 "
 echo "                                                                 "
-echo "  To start Repair-It now, run:                                  "
+echo "  To start Repair-It manually, run:                             "
 echo "    ./start.sh                                                   "
 echo "                                                                 "
-echo "  Access the Web Interface at: http://<raspberry-pi-ip>:10930    "
+echo "  To install as a 24/7 background system service, run:          "
+echo "    sudo cp repair-it.service /etc/systemd/system/               "
+echo "    sudo systemctl daemon-reload                                 "
+echo "    sudo systemctl enable --now repair-it                        "
+echo "                                                                 "
+echo "  Access Web Interface at: http://<raspberry-pi-ip>:10930        "
 echo "================================================================="
