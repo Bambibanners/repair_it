@@ -13,7 +13,7 @@ fi
 BACKEND_PID=$!
 
 echo "Starting Repair-It Web Application on http://0.0.0.0:10930..."
-(cd frontend && npm run dev -- --host 0.0.0.0) &
+(cd frontend && npm run dev -- --host 0.0.0.0 --port 10930) &
 FRONTEND_PID=$!
 
 cleanup() {
@@ -24,11 +24,14 @@ cleanup() {
 
 trap cleanup INT TERM
 
+# Get IP address safely
+IP_ADDR=$(hostname -I 2>/dev/null | awk '{print $1}' || echo "your-raspberry-pi-ip")
+
 echo ""
 echo "================================================================="
 echo "  Repair-It is now RUNNING!                                      "
 echo "  Local Access:   http://localhost:10930                         "
-echo "  Network Access: http://$(hostname -I | awk '{print $1}'):10930  "
+echo "  Network Access: http://${IP_ADDR}:10930                        "
 echo "  Press CTRL+C to stop servers.                                  "
 echo "================================================================="
 echo ""
