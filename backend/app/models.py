@@ -89,9 +89,22 @@ class ServiceManual(Base):
     brand = Column(String(100), nullable=False, index=True)
     model_number = Column(String(100), nullable=False, index=True)
     title = Column(String(255), nullable=False)
+    doc_type = Column(String(50), nullable=False, default="Service Manual") # Service Manual, Schematic, Alignment Guide, User Manual
     gdrive_file_id = Column(String(100), nullable=True)
     web_view_link = Column(String(500), nullable=True)
     uploaded_at = Column(DateTime, default=datetime.utcnow)
+
+    compatibilities = relationship("ManualCompatibility", back_populates="manual", cascade="all, delete-orphan")
+
+class ManualCompatibility(Base):
+    __tablename__ = "manual_compatibilities"
+
+    compatibility_id = Column(String(36), primary_key=True, default=generate_uuid)
+    manual_id = Column(String(36), ForeignKey("service_manuals.manual_id"), nullable=False)
+    brand = Column(String(100), nullable=False, index=True)
+    model_number = Column(String(100), nullable=False, index=True)
+
+    manual = relationship("ServiceManual", back_populates="compatibilities")
 
 class MasterPart(Base):
     __tablename__ = "master_parts"

@@ -12,9 +12,16 @@ import {
   Image as ImageIcon,
   FileText,
   UploadCloud,
-  ExternalLink
+  ExternalLink,
+  Link as LinkIcon
 } from 'lucide-react';
-import { uploadUnitMedia, deleteUnitMedia, searchServiceManuals, uploadServiceManual } from '../api/client';
+import { 
+  uploadUnitMedia, 
+  deleteUnitMedia, 
+  searchServiceManuals, 
+  uploadServiceManual, 
+  linkManualToModel 
+} from '../api/client';
 
 export default function UnitDetailModal({ 
   unit, 
@@ -63,8 +70,14 @@ export default function UnitDetailModal({
   // Manuals state
   const [foundManuals, setFoundManuals] = useState([]);
   const [manualTitle, setManualTitle] = useState('');
+  const [manualDocType, setManualDocType] = useState('Service Manual');
   const [manualFile, setManualFile] = useState(null);
   const [manualUploading, setManualUploading] = useState(false);
+
+  // Link Manual Modal State
+  const [linkingManualId, setLinkingManualId] = useState(null);
+  const [linkBrand, setLinkBrand] = useState('');
+  const [linkModel, setLinkModel] = useState('');
 
   useEffect(() => {
     if (unit) {
@@ -90,14 +103,17 @@ export default function UnitDetailModal({
         setListingUrl(listing.listing_url || '');
       }
 
-      // Search matching manuals for this unit brand and model
-      if (unit.brand && unit.model_number) {
-        searchServiceManuals(unit.brand, unit.model_number).then((res) => {
-          setFoundManuals(res || []);
-        }).catch(() => {});
-      }
+      refreshManuals();
     }
   }, [unit]);
+
+  const refreshManuals = () => {
+    if (unit?.brand && unit?.model_number) {
+      searchServiceManuals(unit.brand, unit.model_number).then((res) => {
+        setFoundManuals(res || []);
+      }).catch(() => {});
+    }
+  };
 
   if (!unit) return null;
 
@@ -200,16 +216,35 @@ export default function UnitDetailModal({
       formData.append('brand', unit.brand);
       formData.append('model_number', unit.model_number);
       formData.append('title', manualTitle);
+      formData.append('doc_type', manualDocType);
       formData.append('file', manualFile);
 
-      const newManual = await uploadServiceManual(formData);
-      setFoundManuals((prev) => [...prev, newManual]);
+      await uploadServiceManual(formData);
+      refreshManuals();
       setManualTitle('');
       setManualFile(null);
     } catch (err) {
       alert('Failed to upload service manual: ' + (err.response?.data?.detail || err.message));
     } finally {
       setManualUploading(false);
+    }
+  };
+
+  const handleLinkManualModel = async (e) => {
+    e.preventDefault();
+    if (!linkingManualId || !linkBrand || !linkModel) return;
+
+    try {
+      await linkManualToModel(linkingManualId, {
+        brand: linkBrand.trim(),
+        model_number: linkModel.trim()
+      });
+      setLinkingManualId(null);
+      setLinkBrand('');
+      setLinkModel('');
+      refreshManuals();
+    } catch (err) {
+      alert('Failed to link manual: ' + (err.response?.data?.detail || err.message));
     }
   };
 
@@ -245,7 +280,7 @@ export default function UnitDetailModal({
             { id: 'hardware', label: 'Hardware Details', icon: HardDrive },
             { id: 'repair', label: 'Repair Log & Workbench', icon: Wrench },
             { id: 'parts', label: `Parts Consumed (${parts.length})`, icon: Package },
-            { id: 'media', label: `Media & Drive (${mediaList.length})`, icon: Folder },
+            { id: 'media', label: `Media & Manuals (${mediaList.length})`, icon: Folder },
             { id: 'financials', label: 'Financials & Exit', icon: TrendingUp },
           ].map((tab) => {
             const Icon = tab.icon;
@@ -611,64 +646,146 @@ export default function UnitDetailModal({
               <div className="pt-4 border-t border-slate-200 space-y-3">
                 <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide flex items-center space-x-2">
                   <FileText className="w-4 h-4 text-amber-600" />
-                  <span>Service Manuals & Schematics Vault ({unit.brand} {unit.model_number})</span>
+                  <span>Service Manuals & Schematics Cross-Reference Vault ({unit.brand} {unit.model_number})</span>
                 </h4>
 
                 {foundManuals.length === 0 ? (
                   <p className="text-xs text-slate-500 italic bg-slate-50 p-3 rounded-lg border border-slate-200">
-                    No service manual uploaded yet for {unit.brand} {unit.model_number}. You can upload a PDF service manual below.
+                    No service manual uploaded yet for {unit.brand} {unit.model_number}. Upload a PDF below to store on Google Drive & index locally!
                   </p>
                 ) : (
                   <div className="space-y-2">
                     {foundManuals.map((man) => (
-                      <div key={man.manual_id} className="flex items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs">
-                        <div className="flex items-center space-x-2">
-                          <FileText className="w-4 h-4 text-amber-600 shrink-0" />
-                          <span className="font-bold text-slate-900">{man.title}</span>
+                      <div key={man.manual_id} className="flex flex-col sm:flex-row sm:items-center justify-between p-3 rounded-xl bg-slate-50 border border-slate-200 text-xs gap-2">
+                        <div>
+                          <div className="flex items-center space-x-2">
+                            <FileText className="w-4 h-4 text-amber-600 shrink-0" />
+                            <span className="font-bold text-slate-900">{man.title}</span>
+                            <span className="px-1.5 py-0.5 rounded text-[10px] bg-slate-200 text-slate-700 font-semibold">{man.doc_type || 'Service Manual'}</span>
+                          </div>
+                          {man.compatibilities && man.compatibilities.length > 0 && (
+                            <div className="flex flex-wrap items-center gap-1 mt-1 pl-6">
+                              <span className="text-[10px] text-slate-400">Linked Models:</span>
+                              {man.compatibilities.map(c => (
+                                <span key={c.compatibility_id} className="text-[10px] font-mono px-1.5 py-0.2 rounded bg-amber-100 text-amber-900 border border-amber-300">
+                                  {c.brand} {c.model_number}
+                                </span>
+                              ))}
+                            </div>
+                          )}
                         </div>
-                        {man.web_view_link && (
-                          <a
-                            href={man.web_view_link}
-                            target="_blank"
-                            rel="noreferrer"
-                            className="flex items-center space-x-1 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] transition-colors"
+
+                        <div className="flex items-center space-x-2 shrink-0 self-end sm:self-center">
+                          <button
+                            onClick={() => {
+                              setLinkingManualId(man.manual_id);
+                              setLinkBrand(unit.brand);
+                              setLinkModel('');
+                            }}
+                            className="px-2.5 py-1 rounded bg-white border border-slate-300 text-slate-700 hover:bg-slate-100 font-semibold text-[11px] flex items-center space-x-1"
                           >
-                            <span>Open PDF</span>
-                            <ExternalLink className="w-3 h-3" />
-                          </a>
-                        )}
+                            <LinkIcon className="w-3 h-3 text-amber-600" />
+                            <span>+ Link Model</span>
+                          </button>
+
+                          {man.web_view_link && (
+                            <a
+                              href={man.web_view_link}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="flex items-center space-x-1 px-3 py-1 rounded-lg bg-amber-500 hover:bg-amber-600 text-white font-semibold text-[11px] transition-colors"
+                            >
+                              <span>Open PDF</span>
+                              <ExternalLink className="w-3 h-3" />
+                            </a>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
                 )}
 
+                {/* Form to Link Existing Manual to Another Model */}
+                {linkingManualId && (
+                  <form onSubmit={handleLinkManualModel} className="p-3 rounded-xl bg-amber-50 border border-amber-300 space-y-2 text-xs">
+                    <span className="font-bold text-amber-900 block">Cross-Reference Manual to Additional Equipment Model</span>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <input
+                        type="text"
+                        required
+                        placeholder="Brand (e.g. Pioneer)"
+                        value={linkBrand}
+                        onChange={(e) => setLinkBrand(e.target.value)}
+                        className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                      />
+                      <input
+                        type="text"
+                        required
+                        placeholder="Model Number (e.g. PD-7030)"
+                        value={linkModel}
+                        onChange={(e) => setLinkModel(e.target.value)}
+                        className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                      />
+                    </div>
+                    <div className="flex justify-end space-x-2">
+                      <button
+                        type="button"
+                        onClick={() => setLinkingManualId(null)}
+                        className="px-3 py-1.5 rounded-lg bg-white border border-slate-300 text-slate-700 font-semibold text-xs"
+                      >
+                        Cancel
+                      </button>
+                      <button
+                        type="submit"
+                        className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-semibold text-xs"
+                      >
+                        Link Model
+                      </button>
+                    </div>
+                  </form>
+                )}
+
                 {/* Upload Manual Form */}
-                <form onSubmit={handleUploadManual} className="p-3 rounded-xl bg-slate-50 border border-slate-200 space-y-2 text-xs">
-                  <span className="font-bold text-slate-700 block">Add PDF Service Manual for {unit.brand} {unit.model_number}</span>
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                <form onSubmit={handleUploadManual} className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5 text-xs">
+                  <span className="font-bold text-slate-800 block">Add New PDF Service Manual / Schematic</span>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-2">
                     <input
                       type="text"
                       required
-                      placeholder="Title (e.g. Pioneer PD-6030 Service Manual)"
+                      placeholder="Title (e.g. Pioneer PD-5030 / PD-6030 Service Manual)"
                       value={manualTitle}
                       onChange={(e) => setManualTitle(e.target.value)}
-                      className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                      className="sm:col-span-2 bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
                     />
-                    <input
-                      type="file"
-                      required
-                      accept=".pdf"
-                      onChange={(e) => setManualFile(e.target.files[0])}
-                      className="bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none"
-                    />
+
+                    <select
+                      value={manualDocType}
+                      onChange={(e) => setManualDocType(e.target.value)}
+                      className="bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none"
+                    >
+                      <option value="Service Manual">Service Manual</option>
+                      <option value="Schematic">Schematic / Wiring</option>
+                      <option value="Alignment Guide">Alignment Guide</option>
+                      <option value="User Manual">User Manual</option>
+                      <option value="Parts List">Parts List</option>
+                    </select>
                   </div>
+
+                  <input
+                    type="file"
+                    required
+                    accept=".pdf"
+                    onChange={(e) => setManualFile(e.target.files[0])}
+                    className="w-full bg-white border border-slate-300 rounded-lg p-1.5 text-xs text-slate-900 focus:outline-none"
+                  />
+
                   <div className="flex justify-end">
                     <button
                       type="submit"
                       disabled={manualUploading || !manualFile}
-                      className="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-900 disabled:opacity-50 text-white font-semibold text-xs transition-colors"
+                      className="px-4 py-2 rounded-lg bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-semibold text-xs transition-colors shadow-xs"
                     >
-                      {manualUploading ? 'Uploading PDF...' : 'Save Service Manual'}
+                      {manualUploading ? 'Uploading & Indexing PDF...' : 'Upload & Index PDF'}
                     </button>
                   </div>
                 </form>

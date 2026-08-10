@@ -96,6 +96,11 @@ export const uploadServiceManual = async (formData) => {
   return res.data;
 };
 
+export const linkManualToModel = async (manualId, data) => {
+  const res = await api.post(`/manuals/${manualId}/link`, data);
+  return res.data;
+};
+
 export const searchServiceManuals = async (brand, modelNumber) => {
   const res = await api.get('/manuals/search', {
     params: { brand, model_number: modelNumber }

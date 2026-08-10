@@ -4,8 +4,8 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Q
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
-from ..models import InventoryUnit, UnitMedia, ServiceManual
-from ..schemas import UnitMediaSchema, ServiceManualSchema
+from ..models import InventoryUnit, UnitMedia, ServiceManual, ManualCompatibility
+from ..schemas import UnitMediaSchema, ServiceManualSchema, ManualCompatibilitySchema, ManualCompatibilityCreate
 from ..gdrive import gdrive_manager, LOCAL_UPLOADS_DIR
 from .auth import GoogleOAuthToken
 
@@ -80,6 +80,7 @@ async def upload_service_manual(
     brand: str = Form(...),
     model_number: str = Form(...),
     title: str = Form(...),
+    doc_type: str = Form("Service Manual"),
     file: UploadFile = File(...),
     db: Session = Depends(get_db)
 ):
@@ -104,16 +105,43 @@ async def upload_service_manual(
             brand=brand,
             model_number=model_number,
             title=title,
+            doc_type=doc_type,
             gdrive_file_id=gdrive_res.get("gdrive_file_id"),
             web_view_link=gdrive_res.get("web_view_link")
         )
         db.add(manual)
+        db.flush()
+
+        # Add initial model compatibility link
+        comp = ManualCompatibility(
+            manual_id=manual.manual_id,
+            brand=brand,
+            model_number=model_number
+        )
+        db.add(comp)
+
         db.commit()
         db.refresh(manual)
         return manual
     finally:
         if os.path.exists(tmp_path):
             os.remove(tmp_path)
+
+@router.post("/manuals/{manual_id}/link", response_model=ManualCompatibilitySchema, status_code=201)
+def link_manual_to_model(manual_id: str, data: ManualCompatibilityCreate, db: Session = Depends(get_db)):
+    manual = db.query(ServiceManual).filter(ServiceManual.manual_id == manual_id).first()
+    if not manual:
+        raise HTTPException(status_code=404, detail="Service manual not found")
+
+    comp = ManualCompatibility(
+        manual_id=manual_id,
+        brand=data.brand,
+        model_number=data.model_number
+    )
+    db.add(comp)
+    db.commit()
+    db.refresh(comp)
+    return comp
 
 @router.get("/manuals/search", response_model=List[ServiceManualSchema])
 def search_service_manuals(
@@ -122,8 +150,19 @@ def search_service_manuals(
     db: Session = Depends(get_db)
 ):
     query = db.query(ServiceManual)
-    if brand:
-        query = query.filter(ServiceManual.brand.ilike(f"%{brand}%"))
-    if model_number:
-        query = query.filter(ServiceManual.model_number.ilike(f"%{model_number}%"))
-    return query.all()
+    if brand or model_number:
+        query = query.outerjoin(ServiceManual.compatibilities)
+        if brand and model_number:
+            query = query.filter(
+                ((ServiceManual.brand.ilike(f"%{brand}%")) & (ServiceManual.model_number.ilike(f"%{model_number}%"))) |
+                ((ManualCompatibility.brand.ilike(f"%{brand}%")) & (ManualCompatibility.model_number.ilike(f"%{model_number}%")))
+            )
+        elif brand:
+            query = query.filter(
+                (ServiceManual.brand.ilike(f"%{brand}%")) | (ManualCompatibility.brand.ilike(f"%{brand}%"))
+            )
+        elif model_number:
+            query = query.filter(
+                (ServiceManual.model_number.ilike(f"%{model_number}%")) | (ManualCompatibility.model_number.ilike(f"%{model_number}%"))
+            )
+    return query.distinct().all()

@@ -49,14 +49,29 @@ class UnitMediaSchema(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+class ManualCompatibilityBase(BaseModel):
+    brand: str
+    model_number: str
+
+class ManualCompatibilityCreate(ManualCompatibilityBase):
+    pass
+
+class ManualCompatibilitySchema(ManualCompatibilityBase):
+    compatibility_id: str
+    manual_id: str
+
+    model_config = ConfigDict(from_attributes=True)
+
 class ServiceManualSchema(BaseModel):
     manual_id: str
     brand: str
     model_number: str
     title: str
+    doc_type: str = "Service Manual"
     gdrive_file_id: Optional[str] = None
     web_view_link: Optional[str] = None
     uploaded_at: datetime
+    compatibilities: List[ManualCompatibilitySchema] = []
 
     model_config = ConfigDict(from_attributes=True)
 
