@@ -12,13 +12,19 @@ from .routers import inventory, repair, parts, sales, dashboard, media, auth, ma
 # Initialize tables
 Base.metadata.create_all(bind=engine)
 
-# Auto Migration for is_client_job column if missing
+# Auto Migration for new columns if missing
 with engine.connect() as conn:
-    try:
-        conn.execute(text("ALTER TABLE inventory_units ADD COLUMN is_client_job BOOLEAN DEFAULT 0"))
-        conn.commit()
-    except Exception:
-        pass # Column already exists
+    for migration_sql in [
+        "ALTER TABLE inventory_units ADD COLUMN is_client_job BOOLEAN DEFAULT 0",
+        "ALTER TABLE inventory_units ADD COLUMN has_remote BOOLEAN DEFAULT 0",
+        "ALTER TABLE inventory_units ADD COLUMN has_physical_manual BOOLEAN DEFAULT 0",
+        "ALTER TABLE inventory_units ADD COLUMN other_accessories VARCHAR(255)"
+    ]:
+        try:
+            conn.execute(text(migration_sql))
+            conn.commit()
+        except Exception:
+            pass # Column already exists
 
 # Seed database with sample vintage gear
 seed_database()

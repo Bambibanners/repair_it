@@ -12,6 +12,11 @@ export default function QuickIntakeModal({ preFill, onClose, onSubmit }) {
   const [initialSymptoms, setInitialSymptoms] = useState('');
   const [priority, setPriority] = useState(2);
 
+  // Accessories state
+  const [hasRemote, setHasRemote] = useState(false);
+  const [hasPhysicalManual, setHasPhysicalManual] = useState(false);
+  const [otherAccessories, setOtherAccessories] = useState('');
+
   useEffect(() => {
     if (preFill) {
       if (preFill.brand) setBrand(preFill.brand);
@@ -35,7 +40,10 @@ export default function QuickIntakeModal({ preFill, onClose, onSubmit }) {
       cosmetic_condition: cosmeticCondition,
       system_status: 'Triage',
       initial_symptoms: initialSymptoms,
-      priority: parseInt(priority)
+      priority: parseInt(priority),
+      has_remote: hasRemote,
+      has_physical_manual: hasPhysicalManual,
+      other_accessories: otherAccessories
     });
   };
 
@@ -168,6 +176,43 @@ export default function QuickIntakeModal({ preFill, onClose, onSubmit }) {
                 <option value={2}>2 - Medium Priority</option>
                 <option value={3}>3 - Low Priority</option>
               </select>
+            </div>
+          </div>
+
+          {/* Accessories Included Section */}
+          <div className="p-3.5 rounded-xl bg-slate-50 border border-slate-200 space-y-2.5">
+            <label className="block text-xs font-bold text-slate-700">Included Accessories & Extras</label>
+            
+            <div className="flex flex-wrap items-center gap-4 text-xs font-semibold text-slate-800">
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasRemote}
+                  onChange={(e) => setHasRemote(e.target.checked)}
+                  className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
+                />
+                <span>Original Remote Included</span>
+              </label>
+
+              <label className="flex items-center space-x-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={hasPhysicalManual}
+                  onChange={(e) => setHasPhysicalManual(e.target.checked)}
+                  className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
+                />
+                <span>Physical User Manual Included</span>
+              </label>
+            </div>
+
+            <div>
+              <input
+                type="text"
+                placeholder="Other Accessories (e.g. Original Box, Power Lead, RCA Cables)..."
+                value={otherAccessories}
+                onChange={(e) => setOtherAccessories(e.target.value)}
+                className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+              />
             </div>
           </div>
 

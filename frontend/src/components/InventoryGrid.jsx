@@ -26,7 +26,8 @@ export default function InventoryGrid({ units, onSelectUnit, onDeleteUnit, onOpe
     const matchesSearch = !search || 
       unit.brand.toLowerCase().includes(searchLower) ||
       unit.model_number.toLowerCase().includes(searchLower) ||
-      unit.serial_number.toLowerCase().includes(searchLower);
+      unit.serial_number.toLowerCase().includes(searchLower) ||
+      (unit.other_accessories && unit.other_accessories.toLowerCase().includes(searchLower));
 
     return matchesCategory && matchesStatus && matchesSearch;
   }).sort((a, b) => {
@@ -104,7 +105,7 @@ export default function InventoryGrid({ units, onSelectUnit, onDeleteUnit, onOpe
             <Search className="w-3.5 h-3.5 absolute left-3 top-1/2 -translate-y-1/2 text-slate-400" />
             <input
               type="text"
-              placeholder="Search make, model, SN..."
+              placeholder="Search make, model, SN, accessories..."
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="w-full bg-slate-50 border border-slate-300 rounded-lg pl-8 pr-3 py-1.5 text-xs text-slate-900 placeholder-slate-400 focus:outline-none focus:border-amber-500 focus:bg-white"
@@ -164,13 +165,34 @@ export default function InventoryGrid({ units, onSelectUnit, onDeleteUnit, onOpe
                       onClick={() => onSelectUnit(u.unit_id)}
                       className="hover:bg-slate-50 cursor-pointer transition-colors group"
                     >
-                      {/* Brand & Model */}
+                      {/* Brand & Model + Accessory Badges */}
                       <td className="py-3.5 px-4">
                         <div className="font-bold text-slate-900 group-hover:text-amber-700 transition-colors">
                           {u.brand} {u.model_number}
                         </div>
-                        <div className="text-[11px] text-slate-500 truncate max-w-[200px]">
-                          Src: {u.acquisition_source || 'Unknown'}
+
+                        <div className="flex flex-wrap items-center gap-1 mt-1">
+                          <span className="text-[10px] text-slate-500 mr-1">
+                            Src: {u.acquisition_source || 'Unknown'}
+                          </span>
+                          
+                          {u.has_remote && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                              📺 Remote
+                            </span>
+                          )}
+
+                          {u.has_physical_manual && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                              📖 Manual
+                            </span>
+                          )}
+
+                          {u.other_accessories && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] font-medium bg-slate-100 text-slate-700 border border-slate-200 truncate max-w-[120px]" title={u.other_accessories}>
+                              📦 {u.other_accessories}
+                            </span>
+                          )}
                         </div>
                       </td>
 

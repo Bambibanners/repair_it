@@ -54,6 +54,11 @@ export default function UnitDetailModal({
   const [cosmeticCondition, setCosmeticCondition] = useState(unit?.cosmetic_condition || 'Good');
   const [isClientJob, setIsClientJob] = useState(unit?.is_client_job || false);
 
+  // Accessories state
+  const [hasRemote, setHasRemote] = useState(unit?.has_remote || false);
+  const [hasPhysicalManual, setHasPhysicalManual] = useState(unit?.has_physical_manual || false);
+  const [otherAccessories, setOtherAccessories] = useState(unit?.other_accessories || '');
+
   // Form states for Repair Log
   const [priority, setPriority] = useState(unit?.repair_log?.priority || 2);
   const [symptoms, setSymptoms] = useState(unit?.repair_log?.initial_symptoms || '');
@@ -122,6 +127,9 @@ export default function UnitDetailModal({
       setBaseCost(unit.base_cost);
       setCosmeticCondition(unit.cosmetic_condition);
       setIsClientJob(unit.is_client_job || false);
+      setHasRemote(unit.has_remote || false);
+      setHasPhysicalManual(unit.has_physical_manual || false);
+      setOtherAccessories(unit.other_accessories || '');
       setMediaList(unit.media_items || []);
 
       if (unit.repair_log) {
@@ -203,7 +211,10 @@ export default function UnitDetailModal({
       system_status: status,
       base_cost: parseFloat(baseCost),
       cosmetic_condition: cosmeticCondition,
-      is_client_job: isClientJob
+      is_client_job: isClientJob,
+      has_remote: hasRemote,
+      has_physical_manual: hasPhysicalManual,
+      other_accessories: otherAccessories
     });
   };
 
@@ -384,6 +395,16 @@ export default function UnitDetailModal({
                   Client Repair Job
                 </span>
               )}
+              {hasRemote && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-emerald-100 text-emerald-800 border border-emerald-300">
+                  📺 Remote
+                </span>
+              )}
+              {hasPhysicalManual && (
+                <span className="px-2 py-0.5 rounded text-[10px] font-bold bg-blue-100 text-blue-800 border border-blue-300">
+                  📖 Manual
+                </span>
+              )}
             </div>
             <p className="text-xs text-slate-500 font-mono mt-1">
               Serial #: <span className="text-slate-800 font-medium">{unit.serial_number}</span> • Acquisition: <span className="text-slate-800 font-medium">{unit.acquisition_source || 'N/A'}</span>
@@ -513,6 +534,44 @@ export default function UnitDetailModal({
                   </div>
                 </div>
 
+              </div>
+
+              {/* Accessories & Included Extras Section */}
+              <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 space-y-3">
+                <h4 className="text-xs font-bold text-slate-700 uppercase tracking-wide">Included Accessories & Extras</h4>
+                
+                <div className="flex flex-wrap items-center gap-5 text-xs font-semibold text-slate-800">
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={hasRemote}
+                      onChange={(e) => setHasRemote(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
+                    />
+                    <span>Original Remote Included</span>
+                  </label>
+
+                  <label className="flex items-center space-x-2 cursor-pointer">
+                    <input
+                      type="checkbox"
+                      checked={hasPhysicalManual}
+                      onChange={(e) => setHasPhysicalManual(e.target.checked)}
+                      className="w-4 h-4 text-amber-600 rounded border-slate-300 focus:ring-amber-500"
+                    />
+                    <span>Physical Printed Manual Included</span>
+                  </label>
+                </div>
+
+                <div>
+                  <label className="block text-[11px] font-bold text-slate-600 mb-1">Other Accessories / Original Box</label>
+                  <input
+                    type="text"
+                    placeholder="e.g. Original Box & Inserts, FM Antenna, Gold RCA leads"
+                    value={otherAccessories}
+                    onChange={(e) => setOtherAccessories(e.target.value)}
+                    className="w-full bg-white border border-slate-300 rounded-lg p-2 text-xs text-slate-900 focus:outline-none focus:border-amber-500"
+                  />
+                </div>
               </div>
 
               <div className="pt-4 border-t border-slate-200 flex justify-end">

@@ -20,6 +20,9 @@ class InventoryUnit(Base):
     cosmetic_condition = Column(String(50), nullable=False, default="Good") # Mint, Good, Fair, Poor, For Parts
     system_status = Column(String(50), nullable=False, default="Triage") # Triage, On Bench, Waiting Parts, Ready to Sell, Sold, Scrapped
     is_client_job = Column(Boolean, default=False)
+    has_remote = Column(Boolean, default=False)
+    has_physical_manual = Column(Boolean, default=False)
+    other_accessories = Column(String(255), nullable=True)
     created_at = Column(DateTime, default=datetime.utcnow)
 
     # Relationships

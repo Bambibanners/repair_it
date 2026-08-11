@@ -210,6 +210,9 @@ class InventoryUnitBase(BaseModel):
     cosmetic_condition: str = "Good"
     system_status: str = "Triage"
     is_client_job: bool = False
+    has_remote: bool = False
+    has_physical_manual: bool = False
+    other_accessories: Optional[str] = None
 
 class InventoryUnitCreate(InventoryUnitBase):
     initial_symptoms: Optional[str] = None
@@ -228,6 +231,9 @@ class InventoryUnitUpdate(BaseModel):
     cosmetic_condition: Optional[str] = None
     system_status: Optional[str] = None
     is_client_job: Optional[bool] = None
+    has_remote: Optional[bool] = None
+    has_physical_manual: Optional[bool] = None
+    other_accessories: Optional[str] = None
 
 class NetProfitBreakdown(BaseModel):
     unit_id: str
