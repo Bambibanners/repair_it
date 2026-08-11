@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
@@ -44,7 +44,7 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-# Mount local uploads directory if needed
+# Mount local uploads directory for static serving
 os.makedirs(LOCAL_UPLOADS_DIR, exist_ok=True)
 app.mount("/uploads", StaticFiles(directory=LOCAL_UPLOADS_DIR), name="uploads")
 
@@ -75,8 +75,8 @@ if os.path.exists(frontend_dist):
 
     @app.get("/{full_path:path}")
     async def serve_spa(full_path: str):
-        if full_path.startswith("api") or full_path.startswith("uploads"):
-            return None
+        if full_path.startswith("api/") or full_path.startswith("uploads/") or full_path == "api" or full_path == "uploads":
+            raise HTTPException(status_code=404, detail="Resource not found")
         file_path = os.path.join(frontend_dist, full_path)
         if os.path.exists(file_path) and os.path.isfile(file_path):
             return FileResponse(file_path)

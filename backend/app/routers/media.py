@@ -1,6 +1,7 @@
 import os
 import tempfile
 from fastapi import APIRouter, Depends, HTTPException, UploadFile, File, Form, Query
+from fastapi.responses import FileResponse, RedirectResponse
 from sqlalchemy.orm import Session
 from typing import List, Optional
 from ..database import get_db
@@ -65,6 +66,31 @@ def get_unit_media_list(id: str, db: Session = Depends(get_db)):
     if not unit:
         raise HTTPException(status_code=404, detail="Inventory unit not found")
     return unit.media_items
+
+@router.get("/media/{media_id}/file")
+def serve_media_file(media_id: str, db: Session = Depends(get_db)):
+    media = db.query(UnitMedia).filter(UnitMedia.media_id == media_id).first()
+    if not media:
+        raise HTTPException(status_code=404, detail="Media item not found")
+
+    # If hosted on Google Drive
+    if media.gdrive_file_id:
+        return RedirectResponse(url=f"https://lh3.googleusercontent.com/d/{media.gdrive_file_id}")
+
+    # If stored locally
+    if media.web_view_link and media.web_view_link.startswith("/uploads/"):
+        filename = media.web_view_link.replace("/uploads/", "")
+        file_path = os.path.join(LOCAL_UPLOADS_DIR, filename)
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
+
+    if media.thumbnail_link and media.thumbnail_link.startswith("/uploads/"):
+        filename = media.thumbnail_link.replace("/uploads/", "")
+        file_path = os.path.join(LOCAL_UPLOADS_DIR, filename)
+        if os.path.exists(file_path):
+            return FileResponse(file_path)
+
+    raise HTTPException(status_code=404, detail="Media file not found on local disk or drive")
 
 @router.delete("/media/{media_id}", status_code=204)
 def delete_unit_media(media_id: str, db: Session = Depends(get_db)):

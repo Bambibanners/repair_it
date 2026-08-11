@@ -94,10 +94,11 @@ class GoogleDriveManager:
                 except Exception:
                     pass
 
+                drive_id = drive_file.get('id')
                 return {
-                    "gdrive_file_id": drive_file.get('id'),
+                    "gdrive_file_id": drive_id,
                     "web_view_link": drive_file.get('webViewLink'),
-                    "thumbnail_link": drive_file.get('thumbnailLink') or drive_file.get('webViewLink'),
+                    "thumbnail_link": drive_file.get('thumbnailLink') or f"https://lh3.googleusercontent.com/d/{drive_id}",
                     "storage_mode": "gdrive"
                 }
             except Exception as e:

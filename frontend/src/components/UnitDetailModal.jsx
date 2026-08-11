@@ -206,6 +206,20 @@ export default function UnitDetailModal({
   const computedLaborTotal = (parseFloat(laborHours) || 0) * (parseFloat(laborRate) || 0);
   const computedInvoiceTotal = computedLaborTotal + partsTotal - (parseFloat(depositPaid) || 0);
 
+  const getMediaUrl = (m) => {
+    if (!m) return '';
+    if (m.gdrive_file_id) {
+      return `https://lh3.googleusercontent.com/d/${m.gdrive_file_id}`;
+    }
+    if (m.thumbnail_link && !m.thumbnail_link.includes('drive.google.com')) {
+      return m.thumbnail_link;
+    }
+    if (m.web_view_link && !m.web_view_link.includes('drive.google.com')) {
+      return m.web_view_link;
+    }
+    return `/api/v1/media/${m.media_id}/file`;
+  };
+
   const handleSaveHardware = () => {
     onUpdateUnit(unit.unit_id, {
       system_status: status,
@@ -765,50 +779,57 @@ export default function UnitDetailModal({
                   </div>
                 ) : (
                   <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
-                    {mediaList.map((m) => (
-                      <div key={m.media_id} className="relative group bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-2xs p-2">
-                        {m.file_type === 'image' || m.web_view_link?.match(/\.(jpeg|jpg|png|gif|webp)/i) ? (
-                          <img 
-                            src={m.web_view_link} 
-                            alt={m.file_name} 
-                            className="w-full h-32 object-cover rounded-lg bg-slate-100" 
-                          />
-                        ) : (
-                          <div className="w-full h-32 flex flex-col items-center justify-center bg-slate-100 rounded-lg text-slate-600 p-2 text-center">
-                            <FileText className="w-8 h-8 text-amber-600 mb-1" />
-                            <span className="text-[11px] font-semibold truncate max-w-full">{m.file_name}</span>
-                          </div>
-                        )}
+                    {mediaList.map((m) => {
+                      const mediaUrl = getMediaUrl(m);
+                      const isImage = m.file_type === 'image' || m.file_name?.match(/\.(jpeg|jpg|png|gif|webp|heic)/i);
+                      return (
+                        <div key={m.media_id} className="relative group bg-slate-50 border border-slate-200 rounded-xl overflow-hidden shadow-2xs p-2">
+                          {isImage ? (
+                            <img 
+                              src={mediaUrl} 
+                              alt={m.file_name} 
+                              onError={(e) => {
+                                e.target.onerror = null;
+                                e.target.src = `/api/v1/media/${m.media_id}/file`;
+                              }}
+                              className="w-full h-32 object-cover rounded-lg bg-slate-100" 
+                            />
+                          ) : (
+                            <div className="w-full h-32 flex flex-col items-center justify-center bg-slate-100 rounded-lg text-slate-600 p-2 text-center">
+                              <FileText className="w-8 h-8 text-amber-600 mb-1" />
+                              <span className="text-[11px] font-semibold truncate max-w-full">{m.file_name}</span>
+                            </div>
+                          )}
 
-                        <div className="mt-2 flex items-center justify-between text-[11px]">
-                          <span className="truncate max-w-[120px] font-medium text-slate-800">{m.file_name}</span>
-                          <div className="flex items-center space-x-1">
-                            {m.web_view_link && (
+                          <div className="mt-2 flex items-center justify-between text-[11px]">
+                            <span className="truncate max-w-[120px] font-medium text-slate-800">{m.file_name}</span>
+                            <div className="flex items-center space-x-1">
                               <a
-                                href={m.web_view_link}
+                                href={`/api/v1/media/${m.media_id}/file`}
                                 target="_blank"
                                 rel="noreferrer"
                                 className="p-1 rounded bg-white border border-slate-200 text-amber-700 hover:bg-amber-50"
+                                title="Open Full Resolution File"
                               >
                                 <ExternalLink className="w-3.5 h-3.5" />
                               </a>
-                            )}
-                            <button
-                              onClick={() => handleDeleteMedia(m.media_id)}
-                              className="p-1 rounded bg-white border border-slate-200 text-rose-600 hover:bg-rose-50"
-                            >
-                              <Trash2 className="w-3.5 h-3.5" />
-                            </button>
+                              <button
+                                onClick={() => handleDeleteMedia(m.media_id)}
+                                className="p-1 rounded bg-white border border-slate-200 text-rose-600 hover:bg-rose-50"
+                              >
+                                <Trash2 className="w-3.5 h-3.5" />
+                              </button>
+                            </div>
                           </div>
-                        </div>
 
-                        {m.gdrive_file_id && (
-                          <span className="absolute top-3 left-3 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
-                            GDRIVE
-                          </span>
-                        )}
-                      </div>
-                    ))}
+                          {m.gdrive_file_id && (
+                            <span className="absolute top-3 left-3 bg-emerald-600 text-white text-[9px] font-bold px-1.5 py-0.5 rounded shadow-sm">
+                              GDRIVE
+                            </span>
+                          )}
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </div>
